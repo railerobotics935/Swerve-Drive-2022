@@ -53,7 +53,7 @@
      const auto rot = -m_rotLimiter.Calculate(
                           frc::ApplyDeadband(m_controller.GetRawAxis(2), 0.02)) *
                       Drivetrain::kMaxAngularSpeed;
-     printf("%f\n", m_controller.GetRawAxis(2));
+
  
      m_swerve.Drive(xSpeed, ySpeed, rot, fieldRelative);}
  

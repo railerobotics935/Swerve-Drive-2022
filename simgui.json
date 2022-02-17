@@ -17,8 +17,17 @@
     }
   },
   "NetworkTables": {
+    "FMSInfo": {
+      "open": true
+    },
     "LiveWindow": {
       "Ungrouped": {
+        "ADIS16470[0]": {
+          "open": true
+        },
+        "AnalogInput[3]": {
+          "open": true
+        },
         "open": true
       },
       "open": true

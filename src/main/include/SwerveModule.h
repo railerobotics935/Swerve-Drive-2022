@@ -18,38 +18,40 @@
 #include <wpi/numbers>
 #include <frc/simulation/EncoderSim.h>
 #include "ctre/phoenix.h"
+#include "rev/CANSparkMax.h"
 
 #define ANALOG_TO_RAD_FACTOR 1.2566
 
 class SwerveModule {
  public:
   SwerveModule(int driveMotorChannel, int turningMotorChannel,
-               int driveEncoderChannelA, int driveEncoderChannelB,
                int turningEncoderChannel);
   frc::SwerveModuleState GetState() const;
   void SetDesiredState(const frc::SwerveModuleState& state);
 
  private:
   static constexpr double kWheelRadius = 0.0508;
-  static constexpr int kEncoderResolution = 4096;
+  static constexpr int kEncoderResolution = 42;
 
   static constexpr auto kModuleMaxAngularVelocity =
       wpi::numbers::pi * 1_rad_per_s;  // radians per second
   static constexpr auto kModuleMaxAngularAcceleration =
       wpi::numbers::pi * 2_rad_per_s / 1_s;  // radians per second^2
 
-  frc::PWMSparkMax m_driveMotor;
+  rev::CANSparkMax m_driveMotor;
   WPI_VictorSPX m_turningMotor;
 
-  frc::Encoder m_driveEncoder;
+  rev::SparkMaxRelativeEncoder m_driveEncoder;
   frc::AnalogInput m_turningEncoder;
 
-  frc::sim::EncoderSim m_driveEncoderSim{m_driveEncoder};
+  
+
+  //frc::sim::EncoderSim m_driveEncoderSim{m_driveEncoder};
   //frc::sim::EncoderSim m_turingEncoderSim{m_turningEncoder};
 
-  frc2::PIDController m_drivePIDController{1.0, 0, 0};
+  frc2::PIDController m_drivePIDController{0.3, 0, 0};
   frc::ProfiledPIDController<units::radians> m_turningPIDController{
-      1.0,
+      2.0,
       0.0,
       0.0,
       {kModuleMaxAngularVelocity, kModuleMaxAngularAcceleration}};
