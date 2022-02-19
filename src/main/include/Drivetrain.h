@@ -4,9 +4,9 @@
 
 #pragma once
 
-
 #include <frc/ADIS16470_IMU.h>
 #include <frc/geometry/Translation2d.h>
+#include <frc/geometry/Pose2d.h>
 #include <frc/kinematics/SwerveDriveKinematics.h>
 #include <frc/kinematics/SwerveDriveOdometry.h>
 #include <wpi/numbers>
@@ -21,31 +21,44 @@
 /**
  * Represents a swerve drive style drivetrain.
  */
-class Drivetrain {
- public:
+class Drivetrain
+{
+public:
   Drivetrain();
 
+  void ResetPosition(const frc::Pose2d& pose);
+  void ResetGyro();
+  void Drive(units::meters_per_second_t xSpeed, units::meters_per_second_t ySpeed,
+              units::radians_per_second_t rot, bool fieldRelative);
+  const frc::Pose2d& UpdateOdometry();
 
-  void Drive(units::meters_per_second_t xSpeed,
-             units::meters_per_second_t ySpeed, units::radians_per_second_t rot,
-             bool fieldRelative);
-  void UpdateOdometry();
+  static constexpr units::meters_per_second_t kMaxSpeed = 4.0_mps;  // 4 meters per second
+  static constexpr units::radians_per_second_t kMaxAngularSpeed{wpi::numbers::pi};  // 1/2 rotation per second
 
-  static constexpr units::meters_per_second_t kMaxSpeed =
-      3.0_mps;  // 3 meters per second
-  static constexpr units::radians_per_second_t kMaxAngularSpeed{
-      wpi::numbers::pi};  // 1/2 rotation per second
-
- private:
-  nt::NetworkTableEntry nte_fl_angle;
-  nt::NetworkTableEntry nte_fr_angle;
-  nt::NetworkTableEntry nte_bl_angle;
-  nt::NetworkTableEntry nte_br_angle;
-  nt::NetworkTableEntry nte_fl_speed;
-  nt::NetworkTableEntry nte_fr_speed;
-  nt::NetworkTableEntry nte_bl_speed;
-  nt::NetworkTableEntry nte_br_speed;
+private:
+  nt::NetworkTableEntry nte_fl_set_angle;
+  nt::NetworkTableEntry nte_fr_set_angle;
+  nt::NetworkTableEntry nte_bl_set_angle;
+  nt::NetworkTableEntry nte_br_set_angle;
+  nt::NetworkTableEntry nte_fl_set_speed;
+  nt::NetworkTableEntry nte_fr_set_speed;
+  nt::NetworkTableEntry nte_bl_set_speed;
+  nt::NetworkTableEntry nte_br_set_speed;
   
+  nt::NetworkTableEntry nte_fl_act_angle;
+  nt::NetworkTableEntry nte_fr_act_angle;
+  nt::NetworkTableEntry nte_bl_act_angle;
+  nt::NetworkTableEntry nte_br_act_angle;
+  nt::NetworkTableEntry nte_fl_act_speed;
+  nt::NetworkTableEntry nte_fr_act_speed;
+  nt::NetworkTableEntry nte_bl_act_speed;
+  nt::NetworkTableEntry nte_br_act_speed;
+
+  nt::NetworkTableEntry nte_gyro_angle;
+  nt::NetworkTableEntry nte_robot_x;
+  nt::NetworkTableEntry nte_robot_y;
+
+  // Righthand rule coordinate system: X positive to front, Y positive to left
   frc::Translation2d m_frontLeftLocation{+0.324_m, +0.2675_m};
   frc::Translation2d m_frontRightLocation{+0.324_m, -0.2675_m};
   frc::Translation2d m_backLeftLocation{-0.324_m, +0.2675_m};
@@ -58,9 +71,6 @@ class Drivetrain {
 
   frc::ADIS16470_IMU m_gyro;
 
-  frc::SwerveDriveKinematics<4> m_kinematics{
-      m_frontLeftLocation, m_frontRightLocation, m_backLeftLocation,
-      m_backRightLocation};
-
+  frc::SwerveDriveKinematics<4> m_kinematics{m_frontLeftLocation, m_frontRightLocation, m_backLeftLocation, m_backRightLocation};
   frc::SwerveDriveOdometry<4> m_odometry{m_kinematics, m_gyro.GetAngle()};
 };

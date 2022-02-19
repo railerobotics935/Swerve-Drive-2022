@@ -20,23 +20,23 @@
 #include "ctre/phoenix.h"
 #include "rev/CANSparkMax.h"
 
-#define ANALOG_TO_RAD_FACTOR 1.2566
+#define ANALOG_TO_RAD_FACTOR 1.2566     // 0 to 5.0 volt = 2PI rad
 
-class SwerveModule {
- public:
-  SwerveModule(int driveMotorChannel, int turningMotorChannel,
-               int turningEncoderChannel);
-  frc::SwerveModuleState GetState() const;
+class SwerveModule
+{
+public:
+  SwerveModule(int driveMotorChannel, int turningMotorChannel, int turningEncoderChannel);
+  
   void SetDesiredState(const frc::SwerveModuleState& state);
+  frc::SwerveModuleState GetState() const;
 
- private:
+private:
   static constexpr double kWheelRadius = 0.0508;
   static constexpr int kEncoderResolution = 42;
+  static constexpr double kGearRatio = 6.67;
 
-  static constexpr auto kModuleMaxAngularVelocity =
-      wpi::numbers::pi * 1_rad_per_s;  // radians per second
-  static constexpr auto kModuleMaxAngularAcceleration =
-      wpi::numbers::pi * 2_rad_per_s / 1_s;  // radians per second^2
+  static constexpr auto kModuleMaxAngularVelocity = 4.0 * wpi::numbers::pi * 1_rad_per_s;  // radians per second
+  static constexpr auto kModuleMaxAngularAcceleration = 4.0 * wpi::numbers::pi * 2_rad_per_s / 1_s;  // radians per second^2
 
   rev::CANSparkMax m_driveMotor;
   WPI_VictorSPX m_turningMotor;
@@ -44,20 +44,15 @@ class SwerveModule {
   rev::SparkMaxRelativeEncoder m_driveEncoder;
   frc::AnalogInput m_turningEncoder;
 
-  
-
   //frc::sim::EncoderSim m_driveEncoderSim{m_driveEncoder};
   //frc::sim::EncoderSim m_turingEncoderSim{m_turningEncoder};
 
-  frc2::PIDController m_drivePIDController{0.3, 0, 0};
+  frc2::PIDController m_drivePIDController{2.0, 0, 0};
+
   frc::ProfiledPIDController<units::radians> m_turningPIDController{
-      2.0,
-      0.0,
-      0.0,
+      10.0, 0.0, 0.0,
       {kModuleMaxAngularVelocity, kModuleMaxAngularAcceleration}};
 
-  frc::SimpleMotorFeedforward<units::meters> m_driveFeedforward{1_V,
-                                                                3_V / 1_mps};
-  frc::SimpleMotorFeedforward<units::radians> m_turnFeedforward{
-      1_V, 0.5_V / 1_rad_per_s};
+  frc::SimpleMotorFeedforward<units::meters> m_driveFeedforward{0.5_V, 1_V / 1_mps};
+  frc::SimpleMotorFeedforward<units::radians> m_turnFeedforward{1_V, 1_V / 1_rad_per_s};
 };
