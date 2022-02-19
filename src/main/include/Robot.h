@@ -32,7 +32,7 @@ public:
 
 private:
   frc::XboxController m_controller{0};
-  Drivetrain m_swerve;
+  Drivetrain m_drive;
   bool m_fieldRelative;
 
   // Slew rate limiters to make joystick inputs more gentle; 1/3 sec from 0
@@ -41,8 +41,16 @@ private:
   frc::SlewRateLimiter<units::scalar> m_yspeedLimiter{3 / 1_s};
   frc::SlewRateLimiter<units::scalar> m_rotLimiter{3 / 1_s};
 
+  // Reasonable baseline values for a RAMSETE follower in units of meters and seconds
+//  constexpr double kRamseteB = 2;
+//  constexpr double kRamseteZeta = 0.7;
+
   // declare a 2D field widget object
   frc::Field2d m_field;
+
+  nt::NetworkTableEntry nte_tracked_object_label[16];
+  nt::NetworkTableEntry nte_tracked_object_status[16];
+  nt::NetworkTableEntry nte_tracked_object_location[16];
 
   void DriveWithJoystick(bool fieldRelative);
 };

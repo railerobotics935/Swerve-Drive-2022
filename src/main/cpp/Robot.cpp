@@ -12,7 +12,6 @@
 #include <networktables/NetworkTableEntry.h>
 #include <frc/shuffleboard/ShuffleboardLayout.h>
 #include <frc/shuffleboard/ShuffleboardTab.h>
-#include <networktables/NetworkTableInstance.h>
 
 #include "Drivetrain.h"
 
@@ -22,25 +21,103 @@ void Robot::RobotInit()
 
   // Initialize the 2D field widget
   frc::SmartDashboard::PutData("Field", &m_field);
+
+  //----------------------------------------------------
+  // Initialize network table entries for ball tracking
+  //----------------------------------------------------
+  auto nt_inst = nt::NetworkTableInstance::GetDefault();
+  auto nt_table = nt_inst.GetTable("SmartDashboard");
+
+  nte_tracked_object_label[0] = nt_table->GetEntry("front_cam/tracked_object_0/label");
+  nte_tracked_object_status[0] = nt_table->GetEntry("front_cam/tracked_object_0/status");
+  nte_tracked_object_location[0] = nt_table->GetEntry("front_cam/tracked_object_0/location");
+
+/*
+            ssd=sd.getSubTable(f"tracked_object_{t.id}")
+            ssd.putString("label", label)
+            ssd.putString("status", t.status.name)
+            ssd.putNumberArray("x,y,z", [int(t.spatialCoordinates.x), int(t.spatialCoordinates.y), int(t.spatialCoordinates.z)])
+*/
 }
 
 void Robot::RobotPeriodic() {}
 
 void Robot::AutonomousInit() 
 {
-  frc::Pose2d m_Pose{(units::meter_t)0.0, (units::meter_t)0.0, frc::Rotation2d((units::radian_t)0.0)};
-  m_swerve.ResetPosition(m_Pose);
+//  frc::Pose2d m_Pose{(units::meter_t)0.0, (units::meter_t)0.0, frc::Rotation2d((units::radian_t)0.0)};
+//  m_drive.ResetOdometry(m_Pose);
+
+  //----------------------------------
+  // Test trajectory based autonomous
+  //----------------------------------
+#if 0
+  // Set up config for trajectory
+  frc::TrajectoryConfig config(AutoConstants::kMaxSpeed,
+                               AutoConstants::kMaxAcceleration);
+
+  // Add kinematics to ensure max speed is actually obeyed
+  config.SetKinematics(DriveConstants::kDriveKinematics);
+  // Apply the voltage constraint
+  config.AddConstraint(autoVoltageConstraint);
+
+  // An example trajectory to follow.  All units in meters.
+  auto exampleTrajectory = frc::TrajectoryGenerator::GenerateTrajectory(
+      // Start at the origin facing the +X direction
+      frc::Pose2d(0_m, 0_m, frc::Rotation2d(0_deg)),
+      // Pass through these two interior waypoints, making an 's' curve path
+      {frc::Translation2d(1_m, 1_m), frc::Translation2d(2_m, -1_m)},
+      // End 3 meters straight ahead of where we started, facing backward
+      frc::Pose2d(3_m, 0_m, frc::Rotation2d(180_deg)),
+      // Pass the config
+      config);
+
+  frc2::RamseteCommand ramseteCommand(
+      exampleTrajectory, [this]() { return m_drive.GetPose(); },
+      frc::RamseteController(AutoConstants::kRamseteB,
+                             AutoConstants::kRamseteZeta),
+      frc::SimpleMotorFeedforward<units::meters>(
+          DriveConstants::ks, DriveConstants::kv, DriveConstants::ka),
+      DriveConstants::kDriveKinematics,
+      [this] { return m_drive.GetWheelSpeeds(); },
+      frc2::PIDController(DriveConstants::kPDriveVel, 0, 0),
+      frc2::PIDController(DriveConstants::kPDriveVel, 0, 0),
+      [this](auto left, auto right) { m_drive.TankDriveVolts(left, right); },
+      {&m_drive});
+
+  // Reset odometry to the starting pose of the trajectory.
+  m_drive.ResetOdometry(exampleTrajectory.InitialPose());
+
+  // no auto
+  return new frc2::SequentialCommandGroup(
+      std::move(ramseteCommand),
+      frc2::InstantCommand([this] { m_drive.TankDriveVolts(0_V, 0_V); }, {}));
+#endif
 }
 
 void Robot::AutonomousPeriodic()
 {
-  DriveWithJoystick(false);
+//  DriveWithJoystick(false);
+
+  if (nte_tracked_object_label[0].GetString("none") == "red ball")
+  {
+    std::cout << "red ball present" << std::endl;
+
+    if (nte_tracked_object_status[0].GetString("none") == "TRACKED")
+    {
+      // TODO get location by reading the following array:
+      // [x,y,z] in mm's
+      // from nte_tracked_object_location[0]
+
+    }
+  }
+ 
+
 }
 
 void Robot::TeleopInit()
 {
   frc::Pose2d m_Pose{(units::meter_t)0.0, (units::meter_t)0.0, frc::Rotation2d((units::radian_t)0.0)};
-  m_swerve.ResetPosition(m_Pose);
+  m_drive.ResetOdometry(m_Pose);
 }
 
 void Robot::TeleopPeriodic()
@@ -55,7 +132,7 @@ void Robot::TeleopPeriodic()
   }
 
   if (m_controller.GetRawButtonPressed(2))
-    m_swerve.ResetGyro();
+    m_drive.ResetGyro();
 
   DriveWithJoystick(m_fieldRelative);
 }
@@ -90,11 +167,11 @@ void Robot::DriveWithJoystick(bool fieldRelative)
 
 //  printf("JS x,y,r: %.1f, %.1f, %.2f\n\r", xSpeed, ySpeed, rot);
 
-  m_swerve.Drive(xSpeed, ySpeed, rot, fieldRelative);
+  m_drive.Drive(xSpeed, ySpeed, rot, fieldRelative);
 
-//  const frc::Pose2d m_pose = m_swerve.UpdateOdometry();
+//  const frc::Pose2d m_pose = m_drive.UpdateOdometry();
 //  m_field.SetRobotPose(m_pose);
-  m_field.SetRobotPose(m_swerve.UpdateOdometry());
+  m_field.SetRobotPose(m_drive.UpdateOdometry());
 }
 
 void Robot::SimulationPeriodic()

@@ -13,7 +13,8 @@
       "/LiveWindow/Ungrouped/PWMSparkMax[0]": "Motor Controller",
       "/LiveWindow/Ungrouped/PWMSparkMax[1]": "Motor Controller",
       "/LiveWindow/Ungrouped/PWMSparkMax[2]": "Motor Controller",
-      "/LiveWindow/Ungrouped/PWMSparkMax[3]": "Motor Controller"
+      "/LiveWindow/Ungrouped/PWMSparkMax[3]": "Motor Controller",
+      "/SmartDashboard/Field": "Field2d"
     }
   },
   "NetworkTables": {

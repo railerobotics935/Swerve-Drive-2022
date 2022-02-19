@@ -36,7 +36,7 @@ Drivetrain::Drivetrain()
   nte_robot_y = nt_table->GetEntry("Swerve Drive/Robot Y");
 }
 
-void Drivetrain::ResetPosition(const frc::Pose2d& pose)
+void Drivetrain::ResetOdometry(const frc::Pose2d& pose)
 {
   m_odometry.ResetPosition(pose, m_gyro.GetAngle());
 }
@@ -90,5 +90,10 @@ const frc::Pose2d& Drivetrain::UpdateOdometry()
   nte_robot_x.SetDouble((double)m_odometry.GetPose().X());
   nte_robot_y.SetDouble((double)m_odometry.GetPose().Y());
 
+  return m_odometry.GetPose();
+}
+
+const frc::Pose2d& Drivetrain::GetPose()
+{
   return m_odometry.GetPose();
 }

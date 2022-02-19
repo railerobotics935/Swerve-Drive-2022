@@ -26,11 +26,12 @@ class Drivetrain
 public:
   Drivetrain();
 
-  void ResetPosition(const frc::Pose2d& pose);
+  void ResetOdometry(const frc::Pose2d& pose);
   void ResetGyro();
   void Drive(units::meters_per_second_t xSpeed, units::meters_per_second_t ySpeed,
               units::radians_per_second_t rot, bool fieldRelative);
   const frc::Pose2d& UpdateOdometry();
+  const frc::Pose2d& GetPose();
 
   static constexpr units::meters_per_second_t kMaxSpeed = 4.0_mps;  // 4 meters per second
   static constexpr units::radians_per_second_t kMaxAngularSpeed{wpi::numbers::pi};  // 1/2 rotation per second
