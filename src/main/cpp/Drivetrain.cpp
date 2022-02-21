@@ -65,7 +65,7 @@ void Drivetrain::Drive(units::meters_per_second_t xSpeed, units::meters_per_seco
   nte_fr_set_speed.SetDouble((double)fr.speed);
   nte_bl_set_speed.SetDouble((double)bl.speed);
   nte_br_set_speed.SetDouble((double)br.speed);
-
+  
   m_frontLeft.SetDesiredState(fl);
   m_frontRight.SetDesiredState(fr);
   m_backLeft.SetDesiredState(bl);

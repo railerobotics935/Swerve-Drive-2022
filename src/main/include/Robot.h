@@ -35,11 +35,11 @@ private:
   Drivetrain m_drive;
   bool m_fieldRelative;
 
-  // Slew rate limiters to make joystick inputs more gentle; 1/3 sec from 0
+  // Slew rate limiters to make joystick inputs more gentle; 1/2 sec from 0
   // to 1.
-  frc::SlewRateLimiter<units::scalar> m_xspeedLimiter{3 / 1_s};
-  frc::SlewRateLimiter<units::scalar> m_yspeedLimiter{3 / 1_s};
-  frc::SlewRateLimiter<units::scalar> m_rotLimiter{3 / 1_s};
+  frc::SlewRateLimiter<units::scalar> m_xspeedLimiter{2 / 1_s};
+  frc::SlewRateLimiter<units::scalar> m_yspeedLimiter{2 / 1_s};
+  frc::SlewRateLimiter<units::scalar> m_rotLimiter{2 / 1_s};
 
   // Reasonable baseline values for a RAMSETE follower in units of meters and seconds
 //  constexpr double kRamseteB = 2;

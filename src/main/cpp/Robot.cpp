@@ -15,6 +15,17 @@
 
 #include "Drivetrain.h"
 
+//#define ALAN_CONTROL
+#ifdef  ALAN_CONTROL
+#define AXIS1_X 2
+#define AXIS1_Y 3
+#define AXIS2_X 0
+#else
+#define AXIS1_X 1
+#define AXIS1_Y 0
+#define AXIS2_X 2
+#endif
+
 void Robot::RobotInit()
 {
   m_fieldRelative = true;
@@ -116,12 +127,14 @@ void Robot::AutonomousPeriodic()
 
 void Robot::TeleopInit()
 {
+  // Reseting Pose2d and the odometry
   frc::Pose2d m_Pose{(units::meter_t)0.0, (units::meter_t)0.0, frc::Rotation2d((units::radian_t)0.0)};
   m_drive.ResetOdometry(m_Pose);
 }
 
 void Robot::TeleopPeriodic()
 {
+  // Switching between robot relative and field relative (blue)
   if (m_controller.GetRawButtonPressed(1))
   {
     m_fieldRelative = !m_fieldRelative;
@@ -131,9 +144,11 @@ void Robot::TeleopPeriodic()
       std::cout << "Drive set to ROBOT Relative\n\r";
   }
 
+  // Reset the gyro by pressing a button (green)
   if (m_controller.GetRawButtonPressed(2))
     m_drive.ResetGyro();
 
+  // Drive the robot
   DriveWithJoystick(m_fieldRelative);
 }
 
@@ -147,14 +162,14 @@ void Robot::DriveWithJoystick(bool fieldRelative)
   // Get the x speed. We are inverting this because Xbox controllers return
   // negative values when we push forward.
   const auto xSpeed = -m_xspeedLimiter.Calculate(
-                frc::ApplyDeadband(m_controller.GetRawAxis(3), 0.05)) *
+                frc::ApplyDeadband(m_controller.GetRawAxis(AXIS1_X), 0.05)) *
                 Drivetrain::kMaxSpeed;
 
   // Get the y speed or sideways/strafe speed. We are inverting this because
   // we want a positive value when we pull to the left. Xbox controllers
   // return positive values when you pull to the right by default.
   const auto ySpeed = -m_yspeedLimiter.Calculate(
-                frc::ApplyDeadband(m_controller.GetRawAxis(2), 0.05)) *
+                frc::ApplyDeadband(m_controller.GetRawAxis(AXIS1_Y), 0.05)) *
                 Drivetrain::kMaxSpeed;
 
   // Get the rate of angular rotation. We are inverting this because we want a
@@ -162,7 +177,7 @@ void Robot::DriveWithJoystick(bool fieldRelative)
   // mathematics). Xbox controllers return positive values when you pull to
   // the right by default.
   const auto rot = -m_rotLimiter.Calculate(
-                frc::ApplyDeadband(m_controller.GetRawAxis(0), 0.05)) *
+                frc::ApplyDeadband(m_controller.GetRawAxis(AXIS2_X), 0.05)) *
                 Drivetrain::kMaxAngularSpeed;
 
 //  printf("JS x,y,r: %.1f, %.1f, %.2f\n\r", xSpeed, ySpeed, rot);

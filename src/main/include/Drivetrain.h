@@ -34,9 +34,10 @@ public:
   const frc::Pose2d& GetPose();
 
   static constexpr units::meters_per_second_t kMaxSpeed = 4.0_mps;  // 4 meters per second
-  static constexpr units::radians_per_second_t kMaxAngularSpeed{wpi::numbers::pi};  // 1/2 rotation per second
+  static constexpr units::radians_per_second_t kMaxAngularSpeed{4 * wpi::numbers::pi};  // 2 rotations per second
 
 private:
+  // Declaring all of the network table entrys
   nt::NetworkTableEntry nte_fl_set_angle;
   nt::NetworkTableEntry nte_fr_set_angle;
   nt::NetworkTableEntry nte_bl_set_angle;
@@ -65,6 +66,7 @@ private:
   frc::Translation2d m_backLeftLocation{-0.324_m, +0.2675_m};
   frc::Translation2d m_backRightLocation{-0.324_m, -0.2675_m};
 
+  // Creating the four swerve modules
   SwerveModule m_frontLeft{4, 0, 0};
   SwerveModule m_frontRight{5, 1, 1};
   SwerveModule m_backLeft{6, 2, 2};
