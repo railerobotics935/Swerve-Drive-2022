@@ -35,6 +35,9 @@ private:
   Drivetrain m_drive;
   bool m_fieldRelative;
 
+  // Declaring Motorcontrolers
+  WPI_VictorSPX intakeMotor{8};
+
   // Slew rate limiters to make joystick inputs more gentle; 1/2 sec from 0
   // to 1.
   frc::SlewRateLimiter<units::scalar> m_xspeedLimiter{2 / 1_s};

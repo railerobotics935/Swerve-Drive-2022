@@ -43,6 +43,7 @@ void Robot::RobotInit()
   nte_tracked_object_status[0] = nt_table->GetEntry("front_cam/tracked_object_0/status");
   nte_tracked_object_location[0] = nt_table->GetEntry("front_cam/tracked_object_0/location");
 
+  intakeMotor.ConfigFactoryDefault();
 /*
             ssd=sd.getSubTable(f"tracked_object_{t.id}")
             ssd.putString("label", label)
@@ -187,6 +188,15 @@ void Robot::DriveWithJoystick(bool fieldRelative)
 //  const frc::Pose2d m_pose = m_drive.UpdateOdometry();
 //  m_field.SetRobotPose(m_pose);
   m_field.SetRobotPose(m_drive.UpdateOdometry());
+
+  // Controls for the intake
+  if(m_controller.GetRawButton(5))
+    intakeMotor.Set(0.5);
+  else if(m_controller.GetRawButton(4))
+    intakeMotor.Set(-0.5);
+  else
+    intakeMotor.Set(0);
+
 }
 
 void Robot::SimulationPeriodic()
