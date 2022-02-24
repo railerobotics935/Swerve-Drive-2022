@@ -35,13 +35,32 @@ void Robot::RobotInit()
 
   //----------------------------------------------------
   // Initialize network table entries for ball tracking
+  //
+  // The FrontCam will put detected objects in SmartDashboard under:
+  //
+  //    "FrontCam/Object[x]/Label"
+  //    "FrontCam/Object[x]/Status" 
+  //    "FrontCam/Object[x]/Location"
+  //
+  // where x is a number from 0 to 15 (track maximum 16 objects)
+  //
+  // Possible values for Label are: "red ball", "blue ball", "person", "robot"
+  // Possible values for Status are: "TRACKED", "LOST"
+  // Location is defined as an array with x,y,z location relative to camera in mm: [x,y,z]
   //----------------------------------------------------
   auto nt_inst = nt::NetworkTableInstance::GetDefault();
   auto nt_table = nt_inst.GetTable("SmartDashboard");
 
-  nte_tracked_object_label[0] = nt_table->GetEntry("front_cam/tracked_object_0/label");
-  nte_tracked_object_status[0] = nt_table->GetEntry("front_cam/tracked_object_0/status");
-  nte_tracked_object_location[0] = nt_table->GetEntry("front_cam/tracked_object_0/location");
+  char s_FrontCamTableEntryPath[32];
+  for (uint8_t i=0; i<FRONT_CAM_MAX_OBJECTS; i++)
+  {
+    sprintf( s_FrontCamTableEntryPath, "FrontCam/Object[%d]/Label", i);
+    nte_front_cam_object_label[i] = nt_table->GetEntry(s_FrontCamTableEntryPath);
+    sprintf( s_FrontCamTableEntryPath, "FrontCam/Object[%d]/Status", i);
+    nte_front_cam_object_status[i] = nt_table->GetEntry(s_FrontCamTableEntryPath);
+    sprintf( s_FrontCamTableEntryPath, "FrontCam/Object[%d]/Location", i);
+    nte_front_cam_object_location[i] = nt_table->GetEntry(s_FrontCamTableEntryPath);
+  }
 
   intakeMotor.ConfigFactoryDefault();
 /*
@@ -110,20 +129,21 @@ void Robot::AutonomousPeriodic()
 {
 //  DriveWithJoystick(false);
 
-  if (nte_tracked_object_label[0].GetString("none") == "red ball")
+  for (uint8_t i=0; i<FRONT_CAM_MAX_OBJECTS; i++)
   {
-    std::cout << "red ball present" << std::endl;
-
-    if (nte_tracked_object_status[0].GetString("none") == "TRACKED")
+    if ((nte_front_cam_object_label[i].GetString("none") == "red ball") &&
+        (nte_front_cam_object_status[i].GetString("none") == "TRACKED"))
     {
-      // TODO get location by reading the following array:
-      // [x,y,z] in mm's
-      // from nte_tracked_object_location[0]
+      std::vector<double> arr = nte_front_cam_object_location[i].GetDoubleArray(std::vector<double>());
+      double m_x = arr[0];
+      double m_y = arr[1];
+      double m_z = arr[2];
 
+      std::cout << "First Red Ball at: " << m_x << ", " << m_y << ", " << m_z << std::endl;
+
+      i = FRONT_CAM_MAX_OBJECTS;
     }
   }
- 
-
 }
 
 void Robot::TeleopInit()
