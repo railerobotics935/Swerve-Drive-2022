@@ -15,6 +15,8 @@
 #include <frc/MathUtil.h>
 #include "Drivetrain.h"
 
+#define FRONT_CAM_MAX_OBJECTS 16
+
 class Robot : public frc::TimedRobot
 {
 public:
@@ -53,9 +55,9 @@ private:
   // declare a 2D field widget object
   frc::Field2d m_field;
 
-  nt::NetworkTableEntry nte_tracked_object_label[16];
-  nt::NetworkTableEntry nte_tracked_object_status[16];
-  nt::NetworkTableEntry nte_tracked_object_location[16];
+  nt::NetworkTableEntry nte_front_cam_object_label[FRONT_CAM_MAX_OBJECTS];
+  nt::NetworkTableEntry nte_front_cam_object_status[FRONT_CAM_MAX_OBJECTS];
+  nt::NetworkTableEntry nte_front_cam_object_location[FRONT_CAM_MAX_OBJECTS];
 
   void DriveWithJoystick(bool fieldRelative);
 };
