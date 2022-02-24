@@ -31,12 +31,14 @@ public:
   void SimulationPeriodic() override;
 
 private:
-  frc::XboxController m_controller{0};
+  frc::XboxController m_driveController{0};
+  frc::XboxController m_OpController{1};
   Drivetrain m_drive;
   bool m_fieldRelative;
 
   // Declaring Motorcontrolers
   WPI_VictorSPX intakeMotor{8};
+  WPI_VictorSPX intakeRotationMotor{9};
 
   // Slew rate limiters to make joystick inputs more gentle; 1/2 sec from 0
   // to 1.
