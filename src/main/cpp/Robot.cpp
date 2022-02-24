@@ -44,6 +44,7 @@ void Robot::RobotInit()
   nte_tracked_object_location[0] = nt_table->GetEntry("front_cam/tracked_object_0/location");
 
   intakeMotor.ConfigFactoryDefault();
+  intakeRotationMotor.ConfigFactoryDefault();
 /*
             ssd=sd.getSubTable(f"tracked_object_{t.id}")
             ssd.putString("label", label)
@@ -136,7 +137,7 @@ void Robot::TeleopInit()
 void Robot::TeleopPeriodic()
 {
   // Switching between robot relative and field relative (blue)
-  if (m_controller.GetRawButtonPressed(1))
+  if (m_driveController.GetRawButtonPressed(1))
   {
     m_fieldRelative = !m_fieldRelative;
     if (m_fieldRelative)
@@ -146,7 +147,7 @@ void Robot::TeleopPeriodic()
   }
 
   // Reset the gyro by pressing a button (green)
-  if (m_controller.GetRawButtonPressed(2))
+  if (m_driveController.GetRawButtonPressed(2))
     m_drive.ResetGyro();
 
   // Drive the robot
@@ -163,14 +164,14 @@ void Robot::DriveWithJoystick(bool fieldRelative)
   // Get the x speed. We are inverting this because Xbox controllers return
   // negative values when we push forward.
   const auto xSpeed = -m_xspeedLimiter.Calculate(
-                frc::ApplyDeadband(m_controller.GetRawAxis(AXIS1_X), 0.05)) *
+                frc::ApplyDeadband(m_driveController.GetRawAxis(AXIS1_X), 0.05)) *
                 Drivetrain::kMaxSpeed;
 
   // Get the y speed or sideways/strafe speed. We are inverting this because
   // we want a positive value when we pull to the left. Xbox controllers
   // return positive values when you pull to the right by default.
   const auto ySpeed = -m_yspeedLimiter.Calculate(
-                frc::ApplyDeadband(m_controller.GetRawAxis(AXIS1_Y), 0.05)) *
+                frc::ApplyDeadband(m_driveController.GetRawAxis(AXIS1_Y), 0.05)) *
                 Drivetrain::kMaxSpeed;
 
   // Get the rate of angular rotation. We are inverting this because we want a
@@ -178,7 +179,7 @@ void Robot::DriveWithJoystick(bool fieldRelative)
   // mathematics). Xbox controllers return positive values when you pull to
   // the right by default.
   const auto rot = -m_rotLimiter.Calculate(
-                frc::ApplyDeadband(m_controller.GetRawAxis(AXIS2_X), 0.05)) *
+                frc::ApplyDeadband(m_driveController.GetRawAxis(AXIS2_X), 0.05)) *
                 Drivetrain::kMaxAngularSpeed;
 
 //  printf("JS x,y,r: %.1f, %.1f, %.2f\n\r", xSpeed, ySpeed, rot);
@@ -190,12 +191,16 @@ void Robot::DriveWithJoystick(bool fieldRelative)
   m_field.SetRobotPose(m_drive.UpdateOdometry());
 
   // Controls for the intake
-  if(m_controller.GetRawButton(5))
-    intakeMotor.Set(0.5);
-  else if(m_controller.GetRawButton(4))
-    intakeMotor.Set(-0.5);
+  if(m_OpController.GetRawButton(6))
+    intakeMotor.Set(1.0);
+  else if(m_OpController.GetRawButton(5))
+    intakeMotor.Set(-1.0);
   else
-    intakeMotor.Set(0);
+    intakeMotor.Set(0.0);
+
+  // Control the hood
+  if(m_OpController.GetRawAxis(1) > -0.1 && m_OpController.GetRawAxis(1) < 0.1)
+    intakeRotationMotor.Set(0.5 * m_OpController.GetRawAxis(1));
 
 }
 
