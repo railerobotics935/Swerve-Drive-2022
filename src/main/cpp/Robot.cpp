@@ -219,8 +219,7 @@ void Robot::DriveWithJoystick(bool fieldRelative)
     intakeMotor.Set(0.0);
 
   // Control the hood
-  if(m_OpController.GetRawAxis(1) > -0.1 && m_OpController.GetRawAxis(1) < 0.1)
-    intakeRotationMotor.Set(0.5 * m_OpController.GetRawAxis(1));
+  intakeRotationMotor.Set(0.5 * frc::ApplyDeadband(m_OpController.GetRawAxis(1), 0.05));
 
 }
 
