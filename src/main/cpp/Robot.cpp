@@ -5,6 +5,7 @@
 
 #include <iostream>
 
+#include <ctre/phoenix/motorcontrol/InvertType.h>
 #include <frc/MathUtil.h>
 #include <frc/XboxController.h>
 #include <frc/filter/SlewRateLimiter.h>
@@ -30,17 +31,23 @@ void Robot::RobotInit()
 {
   m_fieldRelative = true;
 
+  shooterOn = false;
+
+  // Set intakeLiftMotorL to follow intakeLiftMotorR
+  intakeLiftMotorL.Follow(intakeLiftMotorR);
+  intakeLiftMotorR.SetInverted(false);
+  intakeLiftMotorL.SetInverted(ctre::phoenix::motorcontrol::InvertType::OpposeMaster); // Set left to mirror right
+
+  // Set neutral mode of lift motors to brake mode - more resistant
+  intakeLiftMotorR.SetNeutralMode(ctre::phoenix::motorcontrol::NeutralMode::Brake);
+  intakeLiftMotorL.SetNeutralMode(ctre::phoenix::motorcontrol::NeutralMode::Brake);
+
   // Initialize the 2D field widget
   frc::SmartDashboard::PutData("Field", &m_field);
 
-  intakeMotor.ConfigFactoryDefault();
-  intakeRotationMotor.ConfigFactoryDefault();
-/*
-            ssd=sd.getSubTable(f"tracked_object_{t.id}")
-            ssd.putString("label", label)
-            ssd.putString("status", t.status.name)
-            ssd.putNumberArray("x,y,z", [int(t.spatialCoordinates.x), int(t.spatialCoordinates.y), int(t.spatialCoordinates.z)])
-*/
+  intakeRoller.ConfigFactoryDefault();
+  intakeLiftMotorR.ConfigFactoryDefault();
+  intakeLiftMotorL.ConfigFactoryDefault();
 }
 
 void Robot::RobotPeriodic() {}
@@ -120,14 +127,38 @@ void Robot::DriveWithJoystick(bool fieldRelative)
 
   // Controls for the intake
   if(m_OpController.GetRawButton(6))
-    intakeMotor.Set(1.0);
+    intakeRoller.Set(1.0);
   else if(m_OpController.GetRawButton(5))
-    intakeMotor.Set(-1.0);
+    intakeRoller.Set(-1.0);
   else
-    intakeMotor.Set(0.0);
+    intakeRoller.Set(0.0);
 
   // Control the hood
-  intakeRotationMotor.Set(0.5 * frc::ApplyDeadband(m_OpController.GetRawAxis(1), 0.05));
+  intakeLiftMotorR.Set(0.5 * frc::ApplyDeadband(m_OpController.GetRawAxis(1), 0.05));
+
+  // Control for ball storage 
+  if(m_OpController.GetRawButton(8))
+    ballStorageBelt.Set(0.75);
+  else if(m_OpController.GetRawButton(7))
+    ballStorageBelt.Set(-0.75);
+  else
+    ballStorageBelt.Set(0.0);
+
+  // Control for shooter feeder - only while pressed
+  if(m_OpController.GetRawButton(4))
+    shooterFeeder.Set(-1);
+  else
+    shooterFeeder.Set(0.0);
+
+/*
+  // Control for shooter feeder - press once to turn on, press again to turn off
+  if(m_OpController.GetRawButtonPressed(4))
+    shooterOn = !shooterOn;
+    if(shooterOn)
+      shooterFeeder.Set(0.5);
+    else
+      shooterFeeder.Set(0.0);
+*/
 }
 
 void Robot::SimulationPeriodic()
