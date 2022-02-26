@@ -39,8 +39,9 @@ private:
   bool m_fieldRelative;
 
   // Declaring Motorcontrolers
-  WPI_VictorSPX intakeMotor{8};
-  WPI_VictorSPX intakeRotationMotor{9};
+  WPI_VictorSPX intakeRoller{8};
+  WPI_VictorSPX intakeLiftMotorR{9};
+  WPI_VictorSPX intakeLiftMotorL{10};
 
   // Slew rate limiters to make joystick inputs more gentle; 1/2 sec from 0
   // to 1.

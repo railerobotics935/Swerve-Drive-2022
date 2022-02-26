@@ -5,6 +5,7 @@
 
 #include <iostream>
 
+#include <ctre/phoenix/motorcontrol/InvertType.h>
 #include <frc/MathUtil.h>
 #include <frc/XboxController.h>
 #include <frc/filter/SlewRateLimiter.h>
@@ -29,6 +30,11 @@
 void Robot::RobotInit()
 {
   m_fieldRelative = true;
+
+  // Set intakeLiftMotorL to follow intakeLiftMotorR
+  intakeLiftMotorL.Follow(intakeLiftMotorR);
+  intakeLiftMotorR.SetInverted(false);
+  intakeLiftMotorL.SetInverted(ctre::phoenix::motorcontrol::InvertType::OpposeMaster); // Set left to mirror right
 
   // Initialize the 2D field widget
   frc::SmartDashboard::PutData("Field", &m_field);
@@ -62,8 +68,9 @@ void Robot::RobotInit()
     nte_front_cam_object_location[i] = nt_table->GetEntry(s_FrontCamTableEntryPath);
   }
 
-  intakeMotor.ConfigFactoryDefault();
-  intakeRotationMotor.ConfigFactoryDefault();
+  intakeRoller.ConfigFactoryDefault();
+  intakeLiftMotorR.ConfigFactoryDefault();
+  intakeLiftMotorL.ConfigFactoryDefault();
 /*
             ssd=sd.getSubTable(f"tracked_object_{t.id}")
             ssd.putString("label", label)
@@ -246,15 +253,15 @@ void Robot::DriveWithJoystick(bool fieldRelative)
   m_field.SetRobotPose(m_drive.UpdateOdometry());
 
   // Controls for the intake
-  if(m_OpController.GetRawButton(6))
-    intakeMotor.Set(1.0);
-  else if(m_OpController.GetRawButton(5))
-    intakeMotor.Set(-1.0);
+  if(m_OpController.GetRawButton(5))
+    intakeRoller.Set(1.0);
+  else if(m_OpController.GetRawButton(4))
+    intakeRoller.Set(-1.0);
   else
-    intakeMotor.Set(0.0);
+    intakeRoller.Set(0.0);
 
   // Control the hood
-  intakeRotationMotor.Set(0.5 * frc::ApplyDeadband(m_OpController.GetRawAxis(1), 0.05));
+  intakeLiftMotorR.Set(0.5 * frc::ApplyDeadband(m_OpController.GetRawAxis(1), 0.05));
 
 }
 
