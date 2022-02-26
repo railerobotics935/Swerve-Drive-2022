@@ -30,7 +30,6 @@ public:
   void ResetGyro();
   void Drive(units::meters_per_second_t xSpeed, units::meters_per_second_t ySpeed,
               units::radians_per_second_t rot, bool fieldRelative);
-  const frc::Pose2d& UpdateOdometry();
   const frc::Pose2d& GetPose();
 
   static constexpr units::meters_per_second_t kMaxSpeed = 4.0_mps;  // 4 meters per second

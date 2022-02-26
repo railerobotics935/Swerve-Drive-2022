@@ -79,18 +79,13 @@ void Drivetrain::Drive(units::meters_per_second_t xSpeed, units::meters_per_seco
   nte_fr_act_speed.SetDouble((double)m_frontRight.GetState().speed);
   nte_bl_act_speed.SetDouble((double)m_backLeft.GetState().speed);
   nte_br_act_speed.SetDouble((double)m_backRight.GetState().speed);
-}
 
-const frc::Pose2d& Drivetrain::UpdateOdometry()
-{
   m_odometry.Update(m_gyro.GetAngle(), m_frontLeft.GetState(), m_frontRight.GetState(),
                     m_backLeft.GetState(), m_backRight.GetState());
 
   nte_gyro_angle.SetDouble((double)m_odometry.GetPose().Rotation().Radians());
   nte_robot_x.SetDouble((double)m_odometry.GetPose().X());
   nte_robot_y.SetDouble((double)m_odometry.GetPose().Y());
-
-  return m_odometry.GetPose();
 }
 
 const frc::Pose2d& Drivetrain::GetPose()

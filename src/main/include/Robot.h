@@ -13,9 +13,9 @@
 #include <frc/filter/SlewRateLimiter.h>
 #include <frc/XboxController.h>
 #include <frc/MathUtil.h>
-#include "Drivetrain.h"
 
-#define FRONT_CAM_MAX_OBJECTS 16
+#include "Drivetrain.h"
+#include "AutomatedFunctions.h"
 
 class Robot : public frc::TimedRobot
 {
@@ -37,6 +37,7 @@ private:
   frc::XboxController m_OpController{1};
   Drivetrain m_drive;
   bool m_fieldRelative;
+  AutomatedFunctions m_Tricks;
 
   // Declaring Motorcontrolers
   WPI_VictorSPX intakeMotor{8};
@@ -54,10 +55,6 @@ private:
 
   // declare a 2D field widget object
   frc::Field2d m_field;
-
-  nt::NetworkTableEntry nte_front_cam_object_label[FRONT_CAM_MAX_OBJECTS];
-  nt::NetworkTableEntry nte_front_cam_object_status[FRONT_CAM_MAX_OBJECTS];
-  nt::NetworkTableEntry nte_front_cam_object_location[FRONT_CAM_MAX_OBJECTS];
 
   void DriveWithJoystick(bool fieldRelative);
 };
