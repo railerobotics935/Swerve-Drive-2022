@@ -13,6 +13,9 @@
 #include <frc/filter/SlewRateLimiter.h>
 #include <frc/XboxController.h>
 #include <frc/MathUtil.h>
+#include <rev/CANSparkMax.h>
+#include <rev/SparkMaxRelativeEncoder.h>
+
 #include "Drivetrain.h"
 
 #define FRONT_CAM_MAX_OBJECTS 16
@@ -37,11 +40,18 @@ private:
   frc::XboxController m_OpController{1};
   Drivetrain m_drive;
   bool m_fieldRelative;
+  bool shooterOn;
 
   // Declaring Motorcontrolers
   WPI_VictorSPX intakeRoller{8};
   WPI_VictorSPX intakeLiftMotorR{9};
   WPI_VictorSPX intakeLiftMotorL{10};
+  rev::CANSparkMax ballStorageBelt{11, rev::CANSparkMax::MotorType::kBrushless};
+  rev::CANSparkMax shooterFeeder{12, rev::CANSparkMax::MotorType::kBrushless};
+  
+  // Declaring spark max encoders
+  rev::SparkMaxRelativeEncoder ballStorageEncoder{ballStorageBelt.GetEncoder()};
+  rev::SparkMaxRelativeEncoder shooterFeederEncoder{shooterFeeder.GetEncoder()};
 
   // Slew rate limiters to make joystick inputs more gentle; 1/2 sec from 0
   // to 1.

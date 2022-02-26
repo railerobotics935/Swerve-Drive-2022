@@ -31,10 +31,16 @@ void Robot::RobotInit()
 {
   m_fieldRelative = true;
 
+  shooterOn = false;
+
   // Set intakeLiftMotorL to follow intakeLiftMotorR
   intakeLiftMotorL.Follow(intakeLiftMotorR);
   intakeLiftMotorR.SetInverted(false);
   intakeLiftMotorL.SetInverted(ctre::phoenix::motorcontrol::InvertType::OpposeMaster); // Set left to mirror right
+
+  // Set neutral mode of lift motors to brake mode - more resistant
+  intakeLiftMotorR.SetNeutralMode(ctre::phoenix::motorcontrol::NeutralMode::Brake);
+  intakeLiftMotorL.SetNeutralMode(ctre::phoenix::motorcontrol::NeutralMode::Brake);
 
   // Initialize the 2D field widget
   frc::SmartDashboard::PutData("Field", &m_field);
@@ -253,9 +259,9 @@ void Robot::DriveWithJoystick(bool fieldRelative)
   m_field.SetRobotPose(m_drive.UpdateOdometry());
 
   // Controls for the intake
-  if(m_OpController.GetRawButton(5))
+  if(m_OpController.GetRawButton(6))
     intakeRoller.Set(1.0);
-  else if(m_OpController.GetRawButton(4))
+  else if(m_OpController.GetRawButton(5))
     intakeRoller.Set(-1.0);
   else
     intakeRoller.Set(0.0);
@@ -263,6 +269,29 @@ void Robot::DriveWithJoystick(bool fieldRelative)
   // Control the hood
   intakeLiftMotorR.Set(0.5 * frc::ApplyDeadband(m_OpController.GetRawAxis(1), 0.05));
 
+  // Control for ball storage 
+  if(m_OpController.GetRawButton(8))
+    ballStorageBelt.Set(0.75);
+  else if(m_OpController.GetRawButton(7))
+    ballStorageBelt.Set(-0.75);
+  else
+    ballStorageBelt.Set(0.0);
+
+  // Control for shooter feeder - only while pressed
+  if(m_OpController.GetRawButton(4))
+    shooterFeeder.Set(-1);
+  else
+    shooterFeeder.Set(0.0);
+
+/*
+  // Control for shooter feeder - press once to turn on, press again to turn off
+  if(m_OpController.GetRawButtonPressed(4))
+    shooterOn = !shooterOn;
+    if(shooterOn)
+      shooterFeeder.Set(0.5);
+    else
+      shooterFeeder.Set(0.0);
+*/
 }
 
 void Robot::SimulationPeriodic()
