@@ -189,7 +189,7 @@ void AutomatedFunctions::LocateAndLoadBall(Drivetrain &m_drive)
     auto rot = 0.0 * AutomatedFunctions::kMaxAutoRotation;
 
     if (m_nearest_ball_z > 800.0)
-      xSpeed = ((m_nearest_ball_z - 800.0) * 0.004) * AutomatedFunctions::kMaxAutoSpeed;
+      xSpeed = ((m_nearest_ball_z - 800.0) * 0.001) * AutomatedFunctions::kMaxAutoSpeed;
 
     if ((m_nearest_ball_x < -50.0) || (m_nearest_ball_x > 50.0))
       rot = -(m_nearest_ball_x * 0.0004) * AutomatedFunctions::kMaxAutoRotation;
