@@ -107,7 +107,64 @@ void AutomatedFunctions::DriveClockWiseSemiCircleAroundIntake(Drivetrain &m_driv
 }
 
 
-void AutomatedFunctions::LocateAndLoadBall(Drivetrain &m_drive)
+void AutomatedFunctions::LocateAndLoadBall(Drivetrain &m_drive, std::string object_class, FunctionCmd command)
+{
+  uint8_t m_nearest_ball_id = 0xFF;
+  double m_nearest_ball_x = 0.0;
+  double m_nearest_ball_z = 1.0E10;
+  uint8_t n_red_balls = 0;
+
+  switch (command)
+  {
+  case AutomatedFunctions::kStartFunction:
+    m_LocateAndLoadBallStep = LocateAndLoadBallStep::kFindBall;
+    break;
+  case AutomatedFunctions::kRunFunction:
+    switch (m_LocateAndLoadBallStep)
+    {
+    case LocateAndLoadBallStep::kFindBall:
+      FindBall(m_drive, object_class);
+      break;
+    case LocateAndLoadBallStep::kChaseBall:
+      ChaseBall(m_drive, object_class);
+      break;
+    case LocateAndLoadBallStep::kLoadBall:
+      // TODO: run intake and ball storage, check ball color ?
+
+      break;  
+    }
+    break;
+  case AutomatedFunctions::kStopFunction:
+    m_LocateAndLoadBallStep = LocateAndLoadBallStep::kFindBall;
+    break;
+  }
+}
+
+void AutomatedFunctions::FindBall(Drivetrain &m_drive, std::string object_class)
+{
+  uint8_t n_red_balls = 0;
+
+  for (uint8_t i=0; i<FRONT_CAM_MAX_OBJECTS; i++)
+  {
+    if ((nte_front_cam_object_label[i].GetString("none") == object_class) &&
+        (nte_front_cam_object_status[i].GetString("none") == "TRACKED"))
+    {
+      n_red_balls++;
+    }
+  }
+
+  if (n_red_balls == 0)
+  {
+    m_drive.Drive((units::velocity::meters_per_second_t)0.0, (units::velocity::meters_per_second_t)0.0, AutomatedFunctions::kFindBallRotation, false);
+  }
+  else
+  {
+    m_drive.Drive((units::velocity::meters_per_second_t)0.0, (units::velocity::meters_per_second_t)0.0, (units::angular_velocity::radians_per_second_t)0.0, true);
+    m_LocateAndLoadBallStep = LocateAndLoadBallStep::kChaseBall;
+  }
+}
+
+void AutomatedFunctions::ChaseBall(Drivetrain &m_drive, std::string object_class)
 {
   uint8_t m_nearest_ball_id = 0xFF;
   double m_nearest_ball_x = 0.0;
@@ -116,7 +173,7 @@ void AutomatedFunctions::LocateAndLoadBall(Drivetrain &m_drive)
 
   for (uint8_t i=0; i<FRONT_CAM_MAX_OBJECTS; i++)
   {
-    if ((nte_front_cam_object_label[i].GetString("none") == "red ball") &&
+    if ((nte_front_cam_object_label[i].GetString("none") == object_class) &&
         (nte_front_cam_object_status[i].GetString("none") == "TRACKED"))
     {
       n_red_balls++;

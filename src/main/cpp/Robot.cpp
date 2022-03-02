@@ -79,11 +79,28 @@ void Robot::TeleopPeriodic()
   if (m_driveController.GetRawButtonPressed(2))
     m_drive.ResetGyro();
 
+  // Initialize the sequence state of the automated function
+  if (m_driveController.GetRawButtonPressed(3))
+    m_Tricks.LocateAndLoadBall(m_drive, "none", AutomatedFunctions::FunctionCmd::kStartFunction);
+
   // Drive the robot, keep Red Button pressed to run an automated function
   if (m_driveController.GetRawButton(3))
-    m_Tricks.LocateAndLoadBall(m_drive);
+  {
+    if (frc::DriverStation::GetAlliance	() == frc::DriverStation::Alliance::kRed)
+      m_Tricks.LocateAndLoadBall(m_drive, "red ball", AutomatedFunctions::FunctionCmd::kRunFunction);
+    else if (frc::DriverStation::GetAlliance	() == frc::DriverStation::Alliance::kBlue)
+      m_Tricks.LocateAndLoadBall(m_drive, "blue ball", AutomatedFunctions::FunctionCmd::kRunFunction);
+    else
+      std::cout << "Please specify the Alliance\n\r";
+  }
   else
+  {
     DriveWithJoystick(m_fieldRelative);
+  }
+
+  // Reset the sequence state of the automated function
+  if (m_driveController.GetRawButtonReleased(3))
+    m_Tricks.LocateAndLoadBall(m_drive, "none", AutomatedFunctions::FunctionCmd::kStopFunction);
 }
 
 void Robot::DisabledInit()

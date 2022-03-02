@@ -20,15 +20,21 @@
 class AutomatedFunctions
 {
 public:
+  enum FunctionCmd {kStartFunction, kRunFunction, kStopFunction};
+
   AutomatedFunctions();
 
   void DriveClockWiseSemiCircleAroundIntake(Drivetrain &m_drive);
-  void LocateAndLoadBall(Drivetrain &m_drive);
+  void LocateAndLoadBall(Drivetrain &m_drive, std::string object_class, FunctionCmd command);
 
   static constexpr units::meters_per_second_t kMaxAutoSpeed = 1.0_mps;  // 1 meters per second
   static constexpr units::radians_per_second_t kMaxAutoRotation{1 * wpi::numbers::pi};  // 1/2 rotations per second
+  static constexpr units::radians_per_second_t kFindBallRotation{0.25 * wpi::numbers::pi};  // 1/8 rotations per second
 
 private:
+  enum LocateAndLoadBallStep {kFindBall, kChaseBall, kLoadBall};
+  LocateAndLoadBallStep m_LocateAndLoadBallStep;
+
   // Declaring all of the network table entrys
   nt::NetworkTableEntry nte_front_cam_object_label[FRONT_CAM_MAX_OBJECTS];
   nt::NetworkTableEntry nte_front_cam_object_status[FRONT_CAM_MAX_OBJECTS];
@@ -50,4 +56,7 @@ private:
   frc::Rotation2d prev_front_cam_pose_angle;
   double prev_front_cam_pose_x;
   double prev_front_cam_pose_y;
+
+  void FindBall(Drivetrain &m_drive, std::string object_class);
+  void ChaseBall(Drivetrain &m_drive, std::string object_class);
 };
