@@ -14,6 +14,7 @@
 #include <frc/shuffleboard/ShuffleboardLayout.h>
 #include <frc/shuffleboard/ShuffleboardTab.h>
 
+
 //#include "Drivetrain.h"
 
 //#define ALAN_CONTROL
@@ -33,6 +34,11 @@ void Robot::RobotInit()
 
   shooterOn = false;
 
+  // Initialize shuffleboard communication
+  auto nt_inst = nt::NetworkTableInstance::GetDefault();
+  auto nt_table = nt_inst.GetTable("datatable");
+  nte_intakeLiftEncoderValue = nt_table->GetEntry("Intake/Encoder");
+
   // Set intakeLiftMotorL to follow intakeLiftMotorR
   intakeLiftMotorL.Follow(intakeLiftMotorR);
   intakeLiftMotorR.SetInverted(false);
@@ -48,6 +54,8 @@ void Robot::RobotInit()
   intakeRoller.ConfigFactoryDefault();
   intakeLiftMotorR.ConfigFactoryDefault();
   intakeLiftMotorL.ConfigFactoryDefault();
+
+  intakeLiftEncoder.Reset();
 }
 
 void Robot::RobotPeriodic() {}
@@ -133,9 +141,6 @@ void Robot::DriveWithJoystick(bool fieldRelative)
   else
     intakeRoller.Set(0.0);
 
-  // Control the hood
-  intakeLiftMotorR.Set(0.5 * frc::ApplyDeadband(m_OpController.GetRawAxis(1), 0.05));
-
   // Control for ball storage 
   if(m_OpController.GetRawButton(8))
     ballStorageBelt.Set(0.75);
@@ -150,6 +155,27 @@ void Robot::DriveWithJoystick(bool fieldRelative)
   else
     shooterFeeder.Set(0.0);
 
+  // Automatic intake lift movement
+  if(m_OpController.GetRawButtonPressed(1))
+    intakeDown = !intakeDown;
+  
+  if(intakeDown)
+  {
+    if(intakeLiftEncoder.Get() > 70)
+      intakeLiftMotorR.Set(-0.2);
+    else
+      intakeLiftMotorR.Set(0);
+  }
+  else
+  {
+    if(intakeLiftEncoder.Get() < 250)
+      intakeLiftMotorR.Set(0.5);
+    else
+      intakeLiftMotorR.Set(0);
+  }
+
+// Set network table to encoder value
+nte_intakeLiftEncoderValue.SetDouble(intakeLiftEncoder.Get());
 /*
   // Control for shooter feeder - press once to turn on, press again to turn off
   if(m_OpController.GetRawButtonPressed(4))
