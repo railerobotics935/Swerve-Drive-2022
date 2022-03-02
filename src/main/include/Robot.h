@@ -15,6 +15,7 @@
 #include <frc/MathUtil.h>
 #include <rev/CANSparkMax.h>
 #include <rev/SparkMaxRelativeEncoder.h>
+#include <frc/Encoder.h>
 
 #include "Drivetrain.h"
 
@@ -44,6 +45,12 @@ private:
   AutomatedFunctions m_Tricks;
   bool shooterOn;
 
+  bool intakeDown = true;
+  int targetIntakePos = 0;
+
+  // Declaring Network Table Entrys
+  nt::NetworkTableEntry nte_intakeLiftEncoderValue;
+
   // Declaring Motorcontrolers
   WPI_VictorSPX intakeRoller{8};
   WPI_VictorSPX intakeLiftMotorR{9};
@@ -54,6 +61,10 @@ private:
   // Declaring spark max encoders
   rev::SparkMaxRelativeEncoder ballStorageEncoder{ballStorageBelt.GetEncoder()};
   rev::SparkMaxRelativeEncoder shooterFeederEncoder{shooterFeeder.GetEncoder()};
+
+  // Declaring encoders for intake motor. 
+  //Gear Ratio for the motor is 188:1 and encoder revoluiton is 7
+  frc::Encoder intakeLiftEncoder{0, 1};
 
   // Slew rate limiters to make joystick inputs more gentle; 1/2 sec from 0
   // to 1.
