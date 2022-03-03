@@ -14,7 +14,6 @@
 #include <frc/shuffleboard/ShuffleboardLayout.h>
 #include <frc/shuffleboard/ShuffleboardTab.h>
 
-
 //#include "Drivetrain.h"
 
 //#define ALAN_CONTROL
@@ -34,28 +33,8 @@ void Robot::RobotInit()
 
   shooterOn = false;
 
-  // Initialize shuffleboard communication
-  auto nt_inst = nt::NetworkTableInstance::GetDefault();
-  auto nt_table = nt_inst.GetTable("datatable");
-  nte_intakeLiftEncoderValue = nt_table->GetEntry("Intake/Encoder");
-
-  // Set intakeLiftMotorL to follow intakeLiftMotorR
-  intakeLiftMotorL.Follow(intakeLiftMotorR);
-  intakeLiftMotorR.SetInverted(false);
-  intakeLiftMotorL.SetInverted(ctre::phoenix::motorcontrol::InvertType::OpposeMaster); // Set left to mirror right
-
-  // Set neutral mode of lift motors to brake mode - more resistant
-  intakeLiftMotorR.SetNeutralMode(ctre::phoenix::motorcontrol::NeutralMode::Brake);
-  intakeLiftMotorL.SetNeutralMode(ctre::phoenix::motorcontrol::NeutralMode::Brake);
-
   // Initialize the 2D field widget
   frc::SmartDashboard::PutData("Field", &m_field);
-
-  intakeRoller.ConfigFactoryDefault();
-  intakeLiftMotorR.ConfigFactoryDefault();
-  intakeLiftMotorL.ConfigFactoryDefault();
-
-  intakeLiftEncoder.Reset();
 }
 
 void Robot::RobotPeriodic() {}
@@ -88,16 +67,22 @@ void Robot::TeleopPeriodic()
     m_drive.ResetGyro();
 
   // Initialize the sequence state of the automated function
-  if (m_driveController.GetRawButtonPressed(3))
-    m_Tricks.LocateAndLoadBall(m_drive, "none", AutomatedFunctions::FunctionCmd::kStartFunction);
+  if (m_driveController.GetRawButtonPressed(3)){
+    m_Tricks.LocateAndLoadBall(m_drive, m_robotFunction, "none", AutomatedFunctions::FunctionCmd::kStartFunction);
+    printf("Locating ball\n\r"); 
+  }
 
   // Drive the robot, keep Red Button pressed to run an automated function
   if (m_driveController.GetRawButton(3))
   {
-    if (frc::DriverStation::GetAlliance	() == frc::DriverStation::Alliance::kRed)
-      m_Tricks.LocateAndLoadBall(m_drive, "red ball", AutomatedFunctions::FunctionCmd::kRunFunction);
-    else if (frc::DriverStation::GetAlliance	() == frc::DriverStation::Alliance::kBlue)
-      m_Tricks.LocateAndLoadBall(m_drive, "blue ball", AutomatedFunctions::FunctionCmd::kRunFunction);
+    if (frc::DriverStation::GetAlliance	() == frc::DriverStation::Alliance::kRed){
+      m_Tricks.LocateAndLoadBall(m_drive, m_robotFunction, "red ball", AutomatedFunctions::FunctionCmd::kRunFunction);
+      printf("Searching for Red Ball\n\r"); 
+    }
+    else if (frc::DriverStation::GetAlliance	() == frc::DriverStation::Alliance::kBlue){
+      m_Tricks.LocateAndLoadBall(m_drive, m_robotFunction, "blue ball", AutomatedFunctions::FunctionCmd::kRunFunction);
+      printf("Searching for blue Ball\n\r");     
+      }
     else
       std::cout << "Please specify the Alliance\n\r";
   }
@@ -107,8 +92,12 @@ void Robot::TeleopPeriodic()
   }
 
   // Reset the sequence state of the automated function
-  if (m_driveController.GetRawButtonReleased(3))
-    m_Tricks.LocateAndLoadBall(m_drive, "none", AutomatedFunctions::FunctionCmd::kStopFunction);
+  if (m_driveController.GetRawButtonReleased(3)){
+    m_Tricks.LocateAndLoadBall(m_drive, m_robotFunction, "none", AutomatedFunctions::FunctionCmd::kStopFunction);
+    printf("End of automation\n\r"); 
+  }
+
+  m_robotFunction.UpdateNTE();
 }
 
 void Robot::DisabledInit()
@@ -152,47 +141,33 @@ void Robot::DriveWithJoystick(bool fieldRelative)
 
   // Controls for the intake
   if(m_OpController.GetRawButton(6))
-    intakeRoller.Set(1.0);
+    m_robotFunction.SetIntakeRoller(-1.0);
   else if(m_OpController.GetRawButton(5))
-    intakeRoller.Set(-1.0);
+    m_robotFunction.SetIntakeRoller(1.0);
   else
-    intakeRoller.Set(0.0);
+    m_robotFunction.SetIntakeRoller(0.0);
 
   // Control for ball storage 
   if(m_OpController.GetRawButton(8))
-    ballStorageBelt.Set(0.75);
+    m_robotFunction.SetBallStorageBelt(0.75);
   else if(m_OpController.GetRawButton(7))
-    ballStorageBelt.Set(-0.75);
+    m_robotFunction.SetBallStorageBelt(-0.75);
   else
-    ballStorageBelt.Set(0.0);
+    m_robotFunction.SetBallStorageBelt(0.0);
 
   // Control for shooter feeder - only while pressed
   if(m_OpController.GetRawButton(4))
-    shooterFeeder.Set(-1);
+    m_robotFunction.SetShooterFeeder(1.0);
   else
-    shooterFeeder.Set(0.0);
+    m_robotFunction.SetShooterFeeder(0.0);
 
   // Automatic intake lift movement
   if(m_OpController.GetRawButtonPressed(1))
     intakeDown = !intakeDown;
   
-  if(intakeDown)
-  {
-    if(intakeLiftEncoder.Get() > 70)
-      intakeLiftMotorR.Set(-0.2);
-    else
-      intakeLiftMotorR.Set(0);
-  }
-  else
-  {
-    if(intakeLiftEncoder.Get() < 250)
-      intakeLiftMotorR.Set(0.5);
-    else
-      intakeLiftMotorR.Set(0);
-  }
-
-// Set network table to encoder value
-nte_intakeLiftEncoderValue.SetDouble(intakeLiftEncoder.Get());
+  m_robotFunction.SetIntakeLift(intakeDown);
+  
+  
 /*
   // Control for shooter feeder - press once to turn on, press again to turn off
   if(m_OpController.GetRawButtonPressed(4))

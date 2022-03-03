@@ -107,7 +107,7 @@ void AutomatedFunctions::DriveClockWiseSemiCircleAroundIntake(Drivetrain &m_driv
 }
 
 
-void AutomatedFunctions::LocateAndLoadBall(Drivetrain &m_drive, std::string object_class, FunctionCmd command)
+void AutomatedFunctions::LocateAndLoadBall(Drivetrain &m_drive, RobotFunction &m_robotFunction, std::string object_class, FunctionCmd command)
 {
   uint8_t m_nearest_ball_id = 0xFF;
   double m_nearest_ball_x = 0.0;
@@ -130,7 +130,7 @@ void AutomatedFunctions::LocateAndLoadBall(Drivetrain &m_drive, std::string obje
       break;
     case LocateAndLoadBallStep::kLoadBall:
       // TODO: run intake and ball storage, check ball color ?
-
+      LoadBall(m_drive, m_robotFunction, object_class);
       break;  
     }
     break;
@@ -252,6 +252,15 @@ void AutomatedFunctions::ChaseBall(Drivetrain &m_drive, std::string object_class
       rot = -(m_nearest_ball_x * 0.0004) * AutomatedFunctions::kMaxAutoRotation;
 
     m_drive.Drive(xSpeed, (units::velocity::meters_per_second_t)0.0, rot, false);
+
+    // Check if ball is ready to be loaded
+    if (m_nearest_ball_z < 1000)
+    {
+      m_drive.Drive((units::velocity::meters_per_second_t)0.5, (units::velocity::meters_per_second_t)0.0, (units::angular_velocity::radians_per_second_t)0.0, true);
+      m_LocateAndLoadBallStep = LocateAndLoadBallStep::kLoadBall;
+      IntakeTimer.Reset();
+      IntakeTimer.Start();
+    }
   }
   else
   {
@@ -265,4 +274,22 @@ void AutomatedFunctions::ChaseBall(Drivetrain &m_drive, std::string object_class
     prev_front_cam_pose_x = 0.0;
     prev_front_cam_pose_y = 0.0;
   }
+}
+
+void AutomatedFunctions::LoadBall(Drivetrain &m_drive, RobotFunction &m_robotFunction, std::string object_class)
+{
+  if(IntakeTimer.Get() < (units::second_t) 2.0){
+    m_drive.Drive((units::velocity::meters_per_second_t)0.5, (units::velocity::meters_per_second_t)0.0, (units::angular_velocity::radians_per_second_t)0.0, true);
+    m_robotFunction.SetIntakeRoller(1.0);
+  }
+  else if(IntakeTimer.Get() < (units::second_t) 5.0){
+    m_robotFunction.SetIntakeRoller(0.0);
+    m_drive.Drive((units::velocity::meters_per_second_t)0.0, (units::velocity::meters_per_second_t)0.0, (units::angular_velocity::radians_per_second_t)0.0, true);
+  }
+  else if(IntakeTimer.Get() < (units::second_t) 8.0)
+    m_robotFunction.SetBallStorageBelt(0.75);
+  else if(IntakeTimer.Get() < (units::second_t) 10.0){
+    m_robotFunction.SetBallStorageBelt(0.0);
+  }
+
 }

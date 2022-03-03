@@ -11,8 +11,10 @@
 #include <networktables/NetworkTableEntry.h>
 #include <networktables/NetworkTableInstance.h>
 #include <wpi/numbers>
+#include <frc/Timer.h>
 
 #include "Drivetrain.h"
+#include "RobotFunction.h"
 
 #define FRONT_CAM_MAX_OBJECTS 16
 
@@ -25,7 +27,7 @@ public:
   AutomatedFunctions();
 
   void DriveClockWiseSemiCircleAroundIntake(Drivetrain &m_drive);
-  void LocateAndLoadBall(Drivetrain &m_drive, std::string object_class, FunctionCmd command);
+  void LocateAndLoadBall(Drivetrain &m_drive, RobotFunction &m_robotFunciton, std::string object_class, FunctionCmd command);
 
   static constexpr units::meters_per_second_t kMaxAutoSpeed = 1.0_mps;  // 1 meters per second
   static constexpr units::radians_per_second_t kMaxAutoRotation{1 * wpi::numbers::pi};  // 1/2 rotations per second
@@ -34,6 +36,9 @@ public:
 private:
   enum LocateAndLoadBallStep {kFindBall, kChaseBall, kLoadBall};
   LocateAndLoadBallStep m_LocateAndLoadBallStep;
+
+  // Declare timer
+  frc::Timer IntakeTimer{};
 
   // Declaring all of the network table entrys
   nt::NetworkTableEntry nte_front_cam_object_label[FRONT_CAM_MAX_OBJECTS];
@@ -59,4 +64,5 @@ private:
 
   void FindBall(Drivetrain &m_drive, std::string object_class);
   void ChaseBall(Drivetrain &m_drive, std::string object_class);
+  void LoadBall(Drivetrain &m_drive, RobotFunction &m_robotFunciton, std::string object_class);
 };

@@ -13,13 +13,10 @@
 #include <frc/filter/SlewRateLimiter.h>
 #include <frc/XboxController.h>
 #include <frc/MathUtil.h>
-#include <rev/CANSparkMax.h>
-#include <rev/SparkMaxRelativeEncoder.h>
-#include <frc/Encoder.h>
+
 
 #include "Drivetrain.h"
-
-#include "Drivetrain.h"
+#include "RobotFunction.h"
 #include "AutomatedFunctions.h"
 
 class Robot : public frc::TimedRobot
@@ -41,30 +38,13 @@ private:
   frc::XboxController m_driveController{0};
   frc::XboxController m_OpController{1};
   Drivetrain m_drive;
-  bool m_fieldRelative;
+  RobotFunction m_robotFunction;
   AutomatedFunctions m_Tricks;
+  bool m_fieldRelative;
   bool shooterOn;
 
   bool intakeDown = true;
   int targetIntakePos = 0;
-
-  // Declaring Network Table Entrys
-  nt::NetworkTableEntry nte_intakeLiftEncoderValue;
-
-  // Declaring Motorcontrolers
-  WPI_VictorSPX intakeRoller{8};
-  WPI_VictorSPX intakeLiftMotorR{9};
-  WPI_VictorSPX intakeLiftMotorL{10};
-  rev::CANSparkMax ballStorageBelt{11, rev::CANSparkMax::MotorType::kBrushless};
-  rev::CANSparkMax shooterFeeder{12, rev::CANSparkMax::MotorType::kBrushless};
-  
-  // Declaring spark max encoders
-  rev::SparkMaxRelativeEncoder ballStorageEncoder{ballStorageBelt.GetEncoder()};
-  rev::SparkMaxRelativeEncoder shooterFeederEncoder{shooterFeeder.GetEncoder()};
-
-  // Declaring encoders for intake motor. 
-  //Gear Ratio for the motor is 188:1 and encoder revoluiton is 7
-  frc::Encoder intakeLiftEncoder{0, 1};
 
   // Slew rate limiters to make joystick inputs more gentle; 1/2 sec from 0
   // to 1.
