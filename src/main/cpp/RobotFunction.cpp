@@ -14,6 +14,10 @@ RobotFunction::RobotFunction()
   auto nt_inst = nt::NetworkTableInstance::GetDefault();
   auto nt_table = nt_inst.GetTable("datatable");
   nte_intakeLiftEncoderValue = nt_table->GetEntry("Intake/Encoder");
+  nte_colorsensorRed = nt_table->GetEntry("Color Sensor/Red");
+  nte_colorsensorGreen = nt_table->GetEntry("Color Sensor/Green");
+  nte_colorsensorBlue = nt_table->GetEntry("Color Sensor/Blue");
+  nte_colorsensorProximity = nt_table->GetEntry("Color Sensor/Proximity");
 
   // Set intakeLiftMotorL to follow intakeLiftMotorR
   intakeLiftMotorL.Follow(intakeLiftMotorR);
@@ -24,10 +28,12 @@ RobotFunction::RobotFunction()
   intakeLiftMotorR.SetNeutralMode(ctre::phoenix::motorcontrol::NeutralMode::Brake);
   intakeLiftMotorL.SetNeutralMode(ctre::phoenix::motorcontrol::NeutralMode::Brake);
 
+  // Config Motor controler
   intakeRoller.ConfigFactoryDefault();
   intakeLiftMotorR.ConfigFactoryDefault();
   intakeLiftMotorL.ConfigFactoryDefault();
 
+  // Reset the encoder
   intakeLiftEncoder.Reset();
 }
 
@@ -68,6 +74,20 @@ void RobotFunction::SetIntakeLift(bool intakeDown)
   }
 }
 
+// Sets Color values to Networktables
+// TODO: return a single color (the main color detected)
+void RobotFunction::GetSensorColor()
+{
+  // Get color and proximity from the color sensor
+  detectedColor = colorSensor.GetColor();
+  proximity = colorSensor.GetProximity();
+
+  // Set the network table entries
+  nte_colorsensorRed.SetDouble(detectedColor.red);
+  nte_colorsensorGreen.SetDouble(detectedColor.green);
+  nte_colorsensorBlue.SetDouble(detectedColor.blue);
+  nte_colorsensorProximity.SetDouble(proximity);
+}
 // Updates the Network tables entrys
 void RobotFunction::UpdateNTE()
 {

@@ -96,7 +96,8 @@ void Robot::TeleopPeriodic()
     m_Tricks.LocateAndLoadBall(m_drive, m_robotFunction, "none", AutomatedFunctions::FunctionCmd::kStopFunction);
     printf("End of automation\n\r"); 
   }
-
+  // Update nte
+  m_robotFunction.GetSensorColor();
   m_robotFunction.UpdateNTE();
 }
 
