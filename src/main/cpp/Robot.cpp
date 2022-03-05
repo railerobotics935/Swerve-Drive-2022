@@ -96,8 +96,8 @@ void Robot::TeleopPeriodic()
     m_Tricks.LocateAndLoadBall(m_drive, m_robotFunction, "none", AutomatedFunctions::FunctionCmd::kStopFunction);
     printf("End of automation\n\r"); 
   }
+
   // Update nte
-  m_robotFunction.GetSensorColor();
   m_robotFunction.UpdateNTE();
 }
 
@@ -141,34 +141,54 @@ void Robot::DriveWithJoystick(bool fieldRelative)
   m_field.SetRobotPose(m_drive.GetPose());
 
   // Controls for the intake
-  if(m_OpController.GetRawButton(6))
+  if(m_OpController.GetRawButton(8)) {
     m_robotFunction.SetIntakeRoller(-1.0);
-  else if(m_OpController.GetRawButton(5))
+    m_robotFunction.SetBallStorageBelt(-0.75);
+  }
+  else if(m_OpController.GetRawButton(7)) {
     m_robotFunction.SetIntakeRoller(1.0);
-  else
-    m_robotFunction.SetIntakeRoller(0.0);
-
-  // Control for ball storage 
-  if(m_OpController.GetRawButton(8))
     m_robotFunction.SetBallStorageBelt(0.75);
-  else if(m_OpController.GetRawButton(7))
+  }
+  else {
+    m_robotFunction.SetIntakeRoller(0.0);
+    m_robotFunction.SetBallStorageBelt(0.0);
+  }
+
+/*
+  // Control for ball storage 
+  if(m_OpController.GetRawButton(6))
+    m_robotFunction.SetBallStorageBelt(0.75);
+  else if(m_OpController.GetRawButton(5))
     m_robotFunction.SetBallStorageBelt(-0.75);
   else
     m_robotFunction.SetBallStorageBelt(0.0);
+*/
 
   // Control for shooter feeder - only while pressed
-  if(m_OpController.GetRawButton(4))
+  if(m_OpController.GetRawButton(4)){
     m_robotFunction.SetShooterFeeder(1.0);
-  else
-    m_robotFunction.SetShooterFeeder(0.0);
+    m_robotFunction.SetBallStorageBelt(0.75);
 
+  }
+  else
+  {
+    m_robotFunction.SetShooterFeeder(0.0);
+    m_robotFunction.SetBallStorageBelt(0.0);
+}
   // Automatic intake lift movement
   if(m_OpController.GetRawButtonPressed(1))
     intakeDown = !intakeDown;
   
   m_robotFunction.SetIntakeLift(intakeDown);
+
+  // Control for shooter
+  if(m_OpController.GetRawButton(3))
+    m_robotFunction.SetShooter(1.0);
+  else
+    m_robotFunction.SetShooter(0.0);
   
-  
+  // Control for shooter angle
+m_robotFunction.SetShooterAngle(frc::ApplyDeadband(m_OpController.GetRawAxis(1*0.5), 0.05)); 
 /*
   // Control for shooter feeder - press once to turn on, press again to turn off
   if(m_OpController.GetRawButtonPressed(4))

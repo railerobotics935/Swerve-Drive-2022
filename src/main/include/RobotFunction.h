@@ -26,6 +26,8 @@ public:
   void SetBallStorageBelt(double power);
   void SetShooterFeeder(double power);
   void SetIntakeLift(bool intakeDown);
+  void SetShooter(double power);
+  void SetShooterAngle(double power);
   std::string GetSensorColor();
   double GetSensorProximity();
   void UpdateNTE();
@@ -37,28 +39,34 @@ private:
   std::string returnColor;
 
   // Declaring Motorcontrolers
-  WPI_VictorSPX intakeRoller{8};
+  WPI_VictorSPX intakeRollerMotor{8};
   WPI_VictorSPX intakeLiftMotorR{9};
   WPI_VictorSPX intakeLiftMotorL{10};
-  rev::CANSparkMax ballStorageBelt{11, rev::CANSparkMax::MotorType::kBrushless};
-  rev::CANSparkMax shooterFeeder{12, rev::CANSparkMax::MotorType::kBrushless};
+  rev::CANSparkMax ballStorageBeltMotor{11, rev::CANSparkMax::MotorType::kBrushless};
+  rev::CANSparkMax shooterFeederMotor{12, rev::CANSparkMax::MotorType::kBrushless};
+  WPI_VictorSPX shooterMotor1{14};
+  WPI_VictorSPX shooterMotor2{15};
+  WPI_VictorSPX shooterMotor3{16};
+  WPI_VictorSPX shooterAngle{13};
   
   // Declaring spark max encoders
-  rev::SparkMaxRelativeEncoder ballStorageEncoder{ballStorageBelt.GetEncoder()};
-  rev::SparkMaxRelativeEncoder shooterFeederEncoder{shooterFeeder.GetEncoder()};
+  rev::SparkMaxRelativeEncoder ballStorageEncoder{ballStorageBeltMotor.GetEncoder()};
+  rev::SparkMaxRelativeEncoder shooterFeederEncoder{shooterFeederMotor.GetEncoder()};
 
   // Color sensor
   static constexpr auto i2cPort = frc::I2C::Port::kOnboard;
   rev::ColorSensorV3 colorSensor{i2cPort};
 
-  // Declaring encoders for intake motor. 
+  // Declaring encoders for intake lift and shooter angle. 
   //Gear Ratio for the motor is 188:1 and encoder revoluiton is 7
   frc::Encoder intakeLiftEncoder{0, 1};
+  frc::Encoder shooterAngleEncoder{2, 3};
 
   // Declaring Network Table Entrys
   nt::NetworkTableEntry nte_intakeLiftEncoderValue;
-  nt::NetworkTableEntry nte_colorsensorRed;
-  nt::NetworkTableEntry nte_colorsensorGreen;
-  nt::NetworkTableEntry nte_colorsensorBlue;
-  nt::NetworkTableEntry nte_colorsensorProximity;
+  nt::NetworkTableEntry nte_shooterAngleEncoderValue;
+  nt::NetworkTableEntry nte_colorSensorRed;
+  nt::NetworkTableEntry nte_colorSensorGreen;
+  nt::NetworkTableEntry nte_colorSensorBlue;
+  nt::NetworkTableEntry nte_colorSensorProximity;
 };

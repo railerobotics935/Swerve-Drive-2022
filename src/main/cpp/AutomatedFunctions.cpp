@@ -276,7 +276,7 @@ void AutomatedFunctions::LoadBall(Drivetrain &m_drive, RobotFunction &m_robotFun
 {
 
   if(IntakeTimer.Get() < (units::second_t) 2.0){
-    m_drive.Drive((units::velocity::meters_per_second_t)0.5, (units::velocity::meters_per_second_t)0.0, (units::angular_velocity::radians_per_second_t)0.0, true);
+    m_drive.Drive((units::velocity::meters_per_second_t)0.5, (units::velocity::meters_per_second_t)0.0, (units::angular_velocity::radians_per_second_t)0.0, false);
     m_robotFunction.SetIntakeRoller(1.0);
   }
   else if(IntakeTimer.Get() < (units::second_t) 5.0){
@@ -284,7 +284,7 @@ void AutomatedFunctions::LoadBall(Drivetrain &m_drive, RobotFunction &m_robotFun
       m_robotFunction.SetBallStorageBelt(0.0);
     else
       m_robotFunction.SetBallStorageBelt(0.75);
-    m_drive.Drive((units::velocity::meters_per_second_t)0.0, (units::velocity::meters_per_second_t)0.0, (units::angular_velocity::radians_per_second_t)0.0, true);
+    m_drive.Drive((units::velocity::meters_per_second_t)0.0, (units::velocity::meters_per_second_t)0.0, (units::angular_velocity::radians_per_second_t)0.0, false);
   }
   else if(IntakeTimer.Get() < (units::second_t) 7.0){
     if(m_robotFunction.GetSensorProximity() > 400){
