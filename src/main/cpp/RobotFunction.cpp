@@ -52,7 +52,7 @@ void RobotFunction::SetBallStorageBelt(double power)
 // Set power for shooter feeder
 void RobotFunction::SetShooterFeeder(double power)
 {
-  shooterFeeder.Set(power);
+  shooterFeeder.Set(-power);
 }
 
 // Moves the intake lift either up or down depending on the previous pos
@@ -85,7 +85,6 @@ std::string RobotFunction::GetSensorColor()
   nte_colorsensorRed.SetDouble(detectedColor.red);
   nte_colorsensorGreen.SetDouble(detectedColor.green);
   nte_colorsensorBlue.SetDouble(detectedColor.blue);
-  nte_colorsensorProximity.SetDouble(proximity);
 
   // Determine the one with the largest color
   if(detectedColor.red > detectedColor.blue)
@@ -100,6 +99,9 @@ double RobotFunction::GetSensorProximity()
   // Get color and proximity from the color sensor
   proximity = colorSensor.GetProximity();
 
+  // Set the network table entries
+  nte_colorsensorProximity.SetDouble(proximity);
+  
   return proximity;
 }
 

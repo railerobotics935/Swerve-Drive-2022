@@ -287,7 +287,7 @@ void AutomatedFunctions::LoadBall(Drivetrain &m_drive, RobotFunction &m_robotFun
     m_robotFunction.SetBallStorageBelt(0.75);
     m_drive.Drive((units::velocity::meters_per_second_t)0.0, (units::velocity::meters_per_second_t)0.0, (units::angular_velocity::radians_per_second_t)0.0, true);
   }
-  else if(IntakeTimer.Get() < (units::second_t) 10.0 && m_robotFunction.GetSensorProximity() > 100){
+  else if(IntakeTimer.Get() < (units::second_t) 10.0 || m_robotFunction.GetSensorProximity() > 400){
     m_robotFunction.SetBallStorageBelt(0.0);
   }
 
