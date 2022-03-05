@@ -34,7 +34,7 @@ public:
   static constexpr units::radians_per_second_t kFindBallRotation{0.25 * wpi::numbers::pi};  // 1/8 rotations per second
 
 private:
-  enum LocateAndLoadBallStep {kFindBall, kChaseBall, kLoadBall};
+  enum LocateAndLoadBallStep {kFindBall, kChaseBall, kLoadBall, kBallLoaded};
   LocateAndLoadBallStep m_LocateAndLoadBallStep;
 
   // Declare timer

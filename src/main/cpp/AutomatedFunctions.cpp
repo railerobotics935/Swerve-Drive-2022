@@ -109,10 +109,6 @@ void AutomatedFunctions::DriveClockWiseSemiCircleAroundIntake(Drivetrain &m_driv
 
 void AutomatedFunctions::LocateAndLoadBall(Drivetrain &m_drive, RobotFunction &m_robotFunction, std::string object_class, FunctionCmd command)
 {
-  uint8_t m_nearest_ball_id = 0xFF;
-  double m_nearest_ball_x = 0.0;
-  double m_nearest_ball_z = 1.0E10;
-  uint8_t n_red_balls = 0;
 
   switch (command)
   {
@@ -278,17 +274,27 @@ void AutomatedFunctions::ChaseBall(Drivetrain &m_drive, std::string object_class
 
 void AutomatedFunctions::LoadBall(Drivetrain &m_drive, RobotFunction &m_robotFunction, std::string object_class)
 {
+
   if(IntakeTimer.Get() < (units::second_t) 2.0){
     m_drive.Drive((units::velocity::meters_per_second_t)0.5, (units::velocity::meters_per_second_t)0.0, (units::angular_velocity::radians_per_second_t)0.0, true);
     m_robotFunction.SetIntakeRoller(1.0);
   }
   else if(IntakeTimer.Get() < (units::second_t) 5.0){
-    m_robotFunction.SetIntakeRoller(0.0);
-    m_robotFunction.SetBallStorageBelt(0.75);
+    if(m_robotFunction.GetSensorProximity() > 400)
+      m_robotFunction.SetBallStorageBelt(0.0);
+    else
+      m_robotFunction.SetBallStorageBelt(0.75);
     m_drive.Drive((units::velocity::meters_per_second_t)0.0, (units::velocity::meters_per_second_t)0.0, (units::angular_velocity::radians_per_second_t)0.0, true);
   }
-  else if(IntakeTimer.Get() < (units::second_t) 10.0 || m_robotFunction.GetSensorProximity() > 400){
-    m_robotFunction.SetBallStorageBelt(0.0);
+  else if(IntakeTimer.Get() < (units::second_t) 7.0){
+    if(m_robotFunction.GetSensorProximity() > 400){
+      m_robotFunction.SetBallStorageBelt(0.0);
+      m_LocateAndLoadBallStep = LocateAndLoadBallStep::kBallLoaded;
+    }
+    else
+      m_robotFunction.SetBallStorageBelt(0.75);
+    m_robotFunction.SetIntakeRoller(0.0);
   }
-
+  else
+    m_LocateAndLoadBallStep = LocateAndLoadBallStep::kBallLoaded;
 }
