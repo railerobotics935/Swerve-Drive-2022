@@ -74,20 +74,35 @@ void RobotFunction::SetIntakeLift(bool intakeDown)
   }
 }
 
-// Sets Color values to Networktables
-// TODO: return a single color (the main color detected)
-void RobotFunction::GetSensorColor()
+// Sets Color values to Networktables and returns red or blue
+std::string RobotFunction::GetSensorColor()
 {
   // Get color and proximity from the color sensor
   detectedColor = colorSensor.GetColor();
   proximity = colorSensor.GetProximity();
-
+  
   // Set the network table entries
   nte_colorsensorRed.SetDouble(detectedColor.red);
   nte_colorsensorGreen.SetDouble(detectedColor.green);
   nte_colorsensorBlue.SetDouble(detectedColor.blue);
   nte_colorsensorProximity.SetDouble(proximity);
+
+  // Determine the one with the largest color
+  if(detectedColor.red > detectedColor.blue)
+    return "blue";
+  else
+    return "red";
 }
+
+// Returns the proximity
+double RobotFunction::GetSensorProximity()
+{
+  // Get color and proximity from the color sensor
+  proximity = colorSensor.GetProximity();
+
+  return proximity;
+}
+
 // Updates the Network tables entrys
 void RobotFunction::UpdateNTE()
 {

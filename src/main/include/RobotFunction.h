@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <iostream>
 #include <string>
 #include <networktables/NetworkTableEntry.h>
 #include <networktables/NetworkTableInstance.h>
@@ -25,13 +26,15 @@ public:
   void SetBallStorageBelt(double power);
   void SetShooterFeeder(double power);
   void SetIntakeLift(bool intakeDown);
-  void GetSensorColor();
+  std::string GetSensorColor();
+  double GetSensorProximity();
   void UpdateNTE();
 
 private:
   // Declaring Local variables
   frc::Color detectedColor;
   uint32_t proximity;
+  std::string returnColor;
 
   // Declaring Motorcontrolers
   WPI_VictorSPX intakeRoller{8};
