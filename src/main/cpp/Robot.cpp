@@ -164,29 +164,41 @@ void Robot::DriveWithJoystick(bool fieldRelative)
     m_robotFunction.SetBallStorageBelt(0.0);
 */
 
-  // Control for shooter feeder - only while pressed
-  if(m_OpController.GetRawButton(4)){
-    m_robotFunction.SetShooterFeeder(1.0);
-    m_robotFunction.SetBallStorageBelt(0.75);
-
+  //Control for shooter feeder and shooter - linked
+  if(m_OpController.GetRawButtonPressed(4))
+  {
+    ShooterTimer.Reset();
+    ShooterTimer.Start();
+  }
+  if(m_OpController.GetRawButton(4))
+  {
+    m_robotFunction.SetShooter(1.0);
+    if(ShooterTimer.Get() > (units::second_t) 1.0)
+    {
+      m_robotFunction.SetBallStorageBelt(0.75);
+      m_robotFunction.SetShooterFeeder(1.0);
+    }
   }
   else
   {
+    m_robotFunction.SetShooter(0.0);
     m_robotFunction.SetShooterFeeder(0.0);
     m_robotFunction.SetBallStorageBelt(0.0);
-}
+  }
+
   // Automatic intake lift movement
   if(m_OpController.GetRawButtonPressed(1))
     intakeDown = !intakeDown;
   
   m_robotFunction.SetIntakeLift(intakeDown);
 
+/*
   // Control for shooter
   if(m_OpController.GetRawButton(3))
     m_robotFunction.SetShooter(1.0);
   else
     m_robotFunction.SetShooter(0.0);
-  
+*/ 
   // Control for shooter angle
 m_robotFunction.SetShooterAngle(frc::ApplyDeadband(m_OpController.GetRawAxis(1*0.5), 0.05)); 
 /*
