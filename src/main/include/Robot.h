@@ -59,5 +59,9 @@ private:
   // declare a 2D field widget object
   frc::Field2d m_field;
 
+  // Declare timer for shooter
+  frc::Timer ShooterTimer{};
+
+
   void DriveWithJoystick(bool fieldRelative);
 };
