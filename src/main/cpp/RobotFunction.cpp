@@ -43,7 +43,7 @@ RobotFunction::RobotFunction()
   shooterMotor1.ConfigFactoryDefault();
   shooterMotor2.ConfigFactoryDefault();
   shooterMotor3.ConfigFactoryDefault();
-  shooterAngle.ConfigFactoryDefault();
+  shooterAngleMotor.ConfigFactoryDefault();
 
   // Reset the encoder
   intakeLiftEncoder.Reset();
@@ -77,7 +77,11 @@ void RobotFunction::SetShooter(double power)
 // Set power for shooter angle
 void RobotFunction::SetShooterAngle(double power)
 {
-  shooterAngle.Set(power);
+  if(shooterAngleEncoder.Get() > 400)
+    power = 0;
+  if(shooterAngleEncoder.Get() < 0)
+    power = 0;
+  shooterAngleMotor.Set(power);
 }
 
 // Moves the intake lift either up or down depending on the previous pos
@@ -92,11 +96,28 @@ void RobotFunction::SetIntakeLift(bool intakeDown)
   }
   else
   {
-    if(intakeLiftEncoder.Get() < 300)
+    if(intakeLiftEncoder.Get() < 250)
       intakeLiftMotorR.Set(0.5);
     else
       intakeLiftMotorR.Set(0);
   }
+}
+
+// Sets the shooter to a target
+void RobotFunction::SetTargetShooterAngle(double target)
+{
+
+  if(target > -30 && target < 600)
+  {  
+    if(shooterAngleEncoder.Get() < target - 20)
+      shooterAngleMotor.Set(-1.0);
+    else if(shooterAngleEncoder.Get() > target + 20)
+      shooterAngleMotor.Set(1.0);
+    else 
+      shooterAngleMotor.Set(0.0);
+  }
+  else
+    shooterAngleMotor.Set(0.0);
 }
 
 // Sets Color values to Networktables and returns red or blue

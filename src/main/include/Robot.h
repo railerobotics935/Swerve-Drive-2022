@@ -42,6 +42,7 @@ private:
   AutomatedFunctions m_Tricks;
   bool m_fieldRelative;
   bool shooterOn;
+  double shooterPower = 0.0;
 
   bool intakeDown = true;
   int targetIntakePos = 0;

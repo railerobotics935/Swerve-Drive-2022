@@ -140,20 +140,7 @@ void Robot::DriveWithJoystick(bool fieldRelative)
 
   m_field.SetRobotPose(m_drive.GetPose());
 
-  // Controls for the intake
-  if(m_OpController.GetRawButton(8)) {
-    m_robotFunction.SetIntakeRoller(-1.0);
-    m_robotFunction.SetBallStorageBelt(-0.75);
-  }
-  else if(m_OpController.GetRawButton(7)) {
-    m_robotFunction.SetIntakeRoller(1.0);
-    m_robotFunction.SetBallStorageBelt(0.75);
-  }
-  else {
-    m_robotFunction.SetIntakeRoller(0.0);
-    m_robotFunction.SetBallStorageBelt(0.0);
-  }
-
+  
 /*
   // Control for ball storage 
   if(m_OpController.GetRawButton(6))
@@ -183,7 +170,21 @@ void Robot::DriveWithJoystick(bool fieldRelative)
   {
     m_robotFunction.SetShooter(0.0);
     m_robotFunction.SetShooterFeeder(0.0);
-    m_robotFunction.SetBallStorageBelt(0.0);
+
+    // Controls for the intake
+    if(m_OpController.GetRawButton(8)) {
+      m_robotFunction.SetIntakeRoller(-1.0);
+      m_robotFunction.SetBallStorageBelt(-0.75);
+    }
+    else if(m_OpController.GetRawButton(7)) {
+      m_robotFunction.SetIntakeRoller(1.0);
+      m_robotFunction.SetBallStorageBelt(0.75);
+    }
+    else {
+      m_robotFunction.SetIntakeRoller(0.0);
+      m_robotFunction.SetBallStorageBelt(0.0);
+    }
+
   }
 
   // Automatic intake lift movement
@@ -200,7 +201,13 @@ void Robot::DriveWithJoystick(bool fieldRelative)
     m_robotFunction.SetShooter(0.0);
 */ 
   // Control for shooter angle
-m_robotFunction.SetShooterAngle(frc::ApplyDeadband(m_OpController.GetRawAxis(1*0.5), 0.05)); 
+  if(m_OpController.GetRawButton(5))
+    m_robotFunction.SetTargetShooterAngle(50);
+  else if(m_OpController.GetRawButton(6))
+    m_robotFunction.SetTargetShooterAngle(300);
+  else
+    m_robotFunction.SetShooterAngle(frc::ApplyDeadband(m_OpController.GetRawAxis(1)*0.5, 0.05)); 
+
 /*
   // Control for shooter feeder - press once to turn on, press again to turn off
   if(m_OpController.GetRawButtonPressed(4))

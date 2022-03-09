@@ -28,6 +28,7 @@ public:
   void SetIntakeLift(bool intakeDown);
   void SetShooter(double power);
   void SetShooterAngle(double power);
+  void SetTargetShooterAngle(double target);
   std::string GetSensorColor();
   double GetSensorProximity();
   void UpdateNTE();
@@ -38,6 +39,7 @@ private:
   uint32_t proximity;
   std::string returnColor;
 
+
   // Declaring Motorcontrolers
   WPI_VictorSPX intakeRollerMotor{8};
   WPI_VictorSPX intakeLiftMotorR{9};
@@ -47,7 +49,7 @@ private:
   WPI_VictorSPX shooterMotor1{14};
   WPI_VictorSPX shooterMotor2{15};
   WPI_VictorSPX shooterMotor3{16};
-  WPI_VictorSPX shooterAngle{13};
+  WPI_VictorSPX shooterAngleMotor{13};
   
   // Declaring spark max encoders
   rev::SparkMaxRelativeEncoder ballStorageEncoder{ballStorageBeltMotor.GetEncoder()};
@@ -60,7 +62,7 @@ private:
   // Declaring encoders for intake lift and shooter angle. 
   //Gear Ratio for the motor is 188:1 and encoder revoluiton is 7
   frc::Encoder intakeLiftEncoder{0, 1};
-  frc::Encoder shooterAngleEncoder{2, 3};
+  frc::Encoder shooterAngleEncoder{2, 3, true};
 
   // Declaring Network Table Entrys
   nt::NetworkTableEntry nte_intakeLiftEncoderValue;
