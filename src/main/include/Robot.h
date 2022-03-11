@@ -13,7 +13,7 @@
 #include <frc/filter/SlewRateLimiter.h>
 #include <frc/XboxController.h>
 #include <frc/MathUtil.h>
-
+#include <frc/SerialPort.h>
 
 #include "Drivetrain.h"
 #include "RobotFunction.h"
@@ -63,6 +63,9 @@ private:
   // Declare timer for shooter
   frc::Timer ShooterTimer{};
 
+  // create a MXP serial Port
+  frc::SerialPort mxp_serial_port{115200, frc::SerialPort::kMXP, 8, frc::SerialPort::kParity_None, frc::SerialPort::kStopBits_One};
+	char nmea_tx_buf[1000];
 
   void DriveWithJoystick(bool fieldRelative);
 };

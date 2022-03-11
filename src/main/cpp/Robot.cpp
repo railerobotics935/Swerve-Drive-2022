@@ -14,6 +14,8 @@
 #include <frc/shuffleboard/ShuffleboardLayout.h>
 #include <frc/shuffleboard/ShuffleboardTab.h>
 
+#include "PixyFunctions/PixyStuff.h"
+
 //#include "Drivetrain.h"
 
 //#define ALAN_CONTROL
@@ -26,6 +28,7 @@
 #define AXIS1_Y 0
 #define AXIS2_X 2
 #endif
+//#define PRINT_BLOCK_DATA
 
 void Robot::RobotInit()
 {
@@ -35,6 +38,8 @@ void Robot::RobotInit()
 
   // Initialize the 2D field widget
   frc::SmartDashboard::PutData("Field", &m_field);
+  
+  PixyStuffInit("datatable");
 }
 
 void Robot::RobotPeriodic() {}
@@ -48,6 +53,7 @@ void Robot::TeleopInit()
   // Resetting Pose2d and the odometry
   frc::Pose2d m_Pose{(units::meter_t)0.0, (units::meter_t)0.0, frc::Rotation2d((units::radian_t)0.0)};
   m_drive.ResetOdometry(m_Pose);
+  CreateYawPID();
 }
 
 void Robot::TeleopPeriodic()
@@ -97,8 +103,22 @@ void Robot::TeleopPeriodic()
     printf("End of automation\n\r"); 
   }
 
-  // Update nte
-  m_robotFunction.UpdateNTE();
+    // Update nte
+    m_robotFunction.UpdateNTE();
+
+  // Get Teensy/Pixy information from RoboRIO expansion port
+  //		blockDataHandler(camera_number, camera_timestamp, n_parsed_blocks, *parsed_blocks);
+      int n_bytes_read = 0;
+      n_bytes_read = mxp_serial_port.Read(nmea_tx_buf, 1000);
+
+      PixyProcessData (n_bytes_read, nmea_tx_buf);
+  #ifdef PRINT_BLOCK_DATA		
+      if (n_bytes_read > 0)
+      {
+        nmea_tx_buf[n_bytes_read] = 0;
+          printf("Chassis data: %s\n", nmea_tx_buf);
+      }
+  #endif
 }
 
 void Robot::DisabledInit()

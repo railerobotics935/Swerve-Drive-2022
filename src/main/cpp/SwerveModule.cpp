@@ -4,8 +4,6 @@
 
 #include "SwerveModule.h"
 
-#include <frc/geometry/Rotation2d.h>
-#include <wpi/numbers>
 
 SwerveModule::SwerveModule(const int driveMotorChannel,
                            const int turningMotorChannel,

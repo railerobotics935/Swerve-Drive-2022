@@ -9,11 +9,14 @@
 #include <iomanip> 
 #include <networktables/NetworkTableEntry.h>
 #include <networktables/NetworkTableInstance.h>
+#include <frc/controller/PIDController.h>
+#include <units/angular_velocity.h>
 
 // Development definitions
 //#define DEBUG_SERIAL
 //#define ECHO_SERIAL1
 //#define DEBUG_TURRET_DATA_TO_COUT
+//#define DEBUG_CAMERA_ONE
 
 using namespace std;
 
@@ -23,38 +26,40 @@ PIXY_BLOCK_TYPE read_blocks[MAX_NR_OF_BLOCKS];
 // Create an instance of the Serial data parser
 PRmsgParser myPRmsgParser;
 
-int i, j;
-
 unsigned int delta_x;
 
 float exp_filter_constant;
 float exp_filter_oneMinConst;
 
-bool new_ball_location = false;
-int ball_x_location = -1;
-int ball_y_location = -1;
-int ball_delta_x = 0;
-int ball_delta_y = 0;
-static double ball_distance_ = 0.0;
-int ball_block_index = -1;
-int _ballColorIndex = 3;
-//float ball_x_velocity = 0.0;
-//float ball_y_velocity = 0.0;
+// module local turret data variables
+static bool target_visible_;
+static int target_lateral_pos_;
+int target_block_index = -1;
+int _targetColorIndex = 1;
+//float target_x_velocity = 0.0;
+//float target_y_velocity = 0.0;
+double yawKp = 1.0;
+double yawKi = 0.0;
+double yawKd = 0.0;
+
+double yCenterOfTarget;
+double xCenterOfTarget;
 
 // module local network table entries
-nt::NetworkTableEntry nte_kickwheel_speed;
-nt::NetworkTableEntry nte_hood_angle;
-nt::NetworkTableEntry nte_target_distance;
+nt::NetworkTableEntry nte_target_data_x;
+nt::NetworkTableEntry nte_target_data_y;
+nt::NetworkTableEntry nte_target_data_w;
+nt::NetworkTableEntry nte_target_data_h;
+nt::NetworkTableEntry nte_yawKp;
+nt::NetworkTableEntry nte_yawKi;
+nt::NetworkTableEntry nte_yawKd;
+nt::NetworkTableEntry nte_yCenterOfTarget;
+nt::NetworkTableEntry nte_xCenterOfTarget;
+nt::NetworkTableEntry nte_centerTargetNum;
+nt::NetworkTableEntry nte_target_visible;
 
-void SetBallColorIndex(int ballColorIndex){
-
-  _ballColorIndex = ballColorIndex;
-}
 void blockDataHandler(uint8_t camera_number, uint32_t camera_timestamp, uint8_t n_parsed_blocks, 
                         PIXY_BLOCK_TYPE *parsed_blocks);
-
-void turretDataHandler(uint32_t turret_timestamp, uint16_t kickwheel_speed, uint16_t hood_angle_1,
-                        uint16_t hood_angle_2, int target_distance);
 
 void PixyStuffInit(string nt_table_name) 
 {
@@ -64,14 +69,21 @@ void PixyStuffInit(string nt_table_name)
 
   // Initialize Serial Data handlers
   myPRmsgParser.setPRBLKEventHandler(blockDataHandler);
-  myPRmsgParser.setPRTUREventHandler(turretDataHandler);
 
   // Setup network table entries for visualizing Pixy/Teensy data
 	auto nt_inst = nt::NetworkTableInstance::GetDefault();
 	auto nt_table = nt_inst.GetTable(nt_table_name);
-  nte_kickwheel_speed = nt_table->GetEntry("Kickwheel Speed");
-  nte_hood_angle = nt_table->GetEntry("Hood Angle");
-  nte_target_distance = nt_table->GetEntry("Target Distance");
+  nte_target_data_x = nt_table->GetEntry("Target/Data/x");
+  nte_target_data_y = nt_table->GetEntry("Target/Data/y");
+  nte_target_data_w = nt_table->GetEntry("Target/Data/w");
+  nte_target_data_h = nt_table->GetEntry("Target/Data/h");
+  nte_yawKp = nt_table->GetEntry("Yaw Pid/Kp");
+  nte_yawKi = nt_table->GetEntry("Yaw Pid/Ki");
+  nte_yawKd = nt_table->GetEntry("Yaw Pid/Kd");
+  nte_yCenterOfTarget = nt_table->GetEntry("Target Data/X Center");
+  nte_xCenterOfTarget = nt_table->GetEntry("Target Data/Y Center");
+  nte_centerTargetNum = nt_table->GetEntry("Target/Center Target Number");
+  nte_target_visible = nt_table->GetEntry("Target/Target Visible");
 }
 
 int PixyProcessData(int n_bytes_read, char uartbuffer[])
@@ -88,23 +100,14 @@ int PixyProcessData(int n_bytes_read, char uartbuffer[])
   return 0;
 }
 
-void turretDataHandler(uint32_t turret_timestamp, uint16_t kickwheel_speed, uint16_t hood_angle_1, uint16_t hood_angle_2, int target_distance)
-{
-  nte_kickwheel_speed.SetDouble(kickwheel_speed);
-  nte_hood_angle.SetDouble(hood_angle_1);
-  nte_target_distance.SetDouble(target_distance);
-
-#ifdef DEBUG_TURRET_DATA_TO_COUT
-  printf("Turret %lu, %u, %u, %d\n", turret_timestamp, kickwheel_speed, hood_angle_1, target_distance);
-#endif
-}
-
 void blockDataHandler(uint8_t camera_number, uint32_t camera_timestamp, uint8_t n_parsed_blocks, PIXY_BLOCK_TYPE *parsed_blocks)
 {
-/*
+  int target_index = -1;
+
+#ifdef DEBUG_CAMERA_ONE
   std::cout << "block data handler " << int(n_parsed_blocks);
   std::cout << " timestamp " << int(camera_timestamp);
-  for (uint8_t i=0; i<n_parsed_blocks; i++)
+  for (i=0; i<n_parsed_blocks; i++)
   {
     std::cout << "," << int(parsed_blocks[i].sig);
     std::cout << "," << int(parsed_blocks[i].x);
@@ -113,73 +116,54 @@ void blockDataHandler(uint8_t camera_number, uint32_t camera_timestamp, uint8_t 
     std::cout << "," << int(parsed_blocks[i].h);
   }
   std::cout << std::endl;
-  return;
-*/
-  ball_block_index = -1;
+#endif 
+  target_index = -1;
 
   for (uint8_t i=0; i<n_parsed_blocks; i++)
   {
-    if (_ballColorIndex == parsed_blocks[i].sig)
+    if (1 == parsed_blocks[i].sig)
     {
-      ball_block_index = i;
+      target_index = i;
       i = n_parsed_blocks;
     }
   }
 
-  if (ball_block_index >= 0 && parsed_blocks[ball_block_index].w != 0)
-  {
-    ball_delta_x = parsed_blocks[ball_block_index].x + (parsed_blocks[ball_block_index].w/2) - 200;
-    ball_delta_y = parsed_blocks[ball_block_index].y + (parsed_blocks[ball_block_index].h/2)- 160;
-    
-    new_ball_location = true;
-  //y=0.3716x2-10.218x+149.29
-    ball_distance_ = 0.3716*double(parsed_blocks[ball_block_index].y)*double(parsed_blocks[ball_block_index].y) 
-- 10.218*double(parsed_blocks[ball_block_index].y) + 149.29;
-  
-    nte_target_distance.SetDouble(ball_distance_);
-    //cout << "ball y: " << parsed_blocks[ball_block_index].y  << " h: " << parsed_blocks[ball_block_index].h << endl;
- 
+  if (target_index >= 0 && parsed_blocks[target_index].w != 0)
+  { 
+    double center_number_target = nte_centerTargetNum.GetDouble(200.0);     
+    target_visible_ = true;
+    target_lateral_pos_ = (int)center_number_target - (int)(parsed_blocks[target_index].x + (parsed_blocks[target_index].w/2));
+    nte_target_data_x.SetDouble(parsed_blocks[target_index].x);
+    nte_target_data_y.SetDouble(parsed_blocks[target_index].y);
+    nte_target_data_w.SetDouble(parsed_blocks[target_index].w);
+    nte_target_data_h.SetDouble(parsed_blocks[target_index].h);
+    nte_target_visible.SetDouble(1);
   }
   else
   {
-    ball_distance_ = 0.0;
-    nte_target_distance.SetDouble(0);  
+    target_visible_ = false;
+    target_lateral_pos_ = 0;
+    nte_target_data_x.SetDouble(0);
+    nte_target_data_y.SetDouble(0);
+    nte_target_data_w.SetDouble(0);
+    nte_target_data_h.SetDouble(0);
+    nte_target_visible.SetDouble(0);
   }
 }
 
-bool PixyAdjustCamera(double *servo_pan, double *servo_tilt, bool *ball_visible, double *ball_distance)
+void CreateYawPID()
 {
-  bool servo_adjusted = false;
-  if (new_ball_location)
-  {
-    new_ball_location = false;
-    *servo_pan += (((double)abs(ball_delta_x) * (double)ball_delta_x) / 260000.0);
-    if (*servo_pan < 0.2)
-      *servo_pan = 0.2;
+  // Getting the PID values from shuffleboard
+  yawKp = nte_yawKp.GetDouble(1.0);
+  yawKi = nte_yawKi.GetDouble(0.0);
+  yawKd = nte_yawKd.GetDouble(0.0);
 
-    if (*servo_pan > 0.8)
-      *servo_pan = 0.8;
-  
-    *servo_tilt += (((double)abs(ball_delta_y) * (double)ball_delta_y) / 260000.0);
-    if (*servo_tilt < 0.3)
-      *servo_tilt = 0.3;
+  // Using the new values, create the PID controller
+  frc::PIDController ShooterYawPID{yawKp, yawKi, yawKd};
+  ShooterYawPID.EnableContinuousInput((double)-units::radian_t(wpi::numbers::pi), (double)units::radian_t(wpi::numbers::pi));
+}
 
-    if (*servo_tilt > 0.7)
-      *servo_tilt = 0.7;
-    servo_adjusted = true;
-
-    *ball_visible = true;
-    *ball_distance = ball_distance_;
-#if 0
-    double timestamp = frc::GetTime();
-    std::cout << std::fixed << std::cout.precision(3);
-    std::cout << "servo_adjusted " << timestamp << std::endl;
-#endif
-  }
-  else
-  {
-    *ball_visible = false;
-  }
-  
-  return servo_adjusted;
+void CenterRobot(Drivetrain &m_drive)
+{
+  // TODO: create a funciton to drive while looking at the target.
 }
