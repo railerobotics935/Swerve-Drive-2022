@@ -193,10 +193,11 @@ void Robot::DriveWithJoystick(bool fieldRelative)
     m_robotFunction.SetShooter(0.0);
     m_robotFunction.SetShooterFeeder(0.0);
 
-    // Controls for the intake
+    // Controls for the intake (button 8 is reverse)
     if(m_OpController.GetRawButton(8)) {
       m_robotFunction.SetIntakeRoller(-1.0);
       m_robotFunction.SetBallStorageBelt(-0.75);
+      m_robotFunction.SetShooterFeeder(-1.0);
     }
     else if(m_OpController.GetRawButton(7)) {
       m_robotFunction.SetIntakeRoller(1.0);
@@ -205,6 +206,7 @@ void Robot::DriveWithJoystick(bool fieldRelative)
     else {
       m_robotFunction.SetIntakeRoller(0.0);
       m_robotFunction.SetBallStorageBelt(0.0);
+      m_robotFunction.SetShooterFeeder(0.0);
     }
 
   }
