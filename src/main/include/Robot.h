@@ -44,7 +44,8 @@ private:
   bool shooterOn;
   double shooterPower = 0.0;
 
-  bool intakeDown = true;
+  bool intakeDown = false;
+  bool firstTime = true;
   int targetIntakePos = 0;
 
   // Slew rate limiters to make joystick inputs more gentle; 1/2 sec from 0

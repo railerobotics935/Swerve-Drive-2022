@@ -22,14 +22,13 @@ class RobotFunction
 {
 public:
   RobotFunction();
-  
+  void Init();
   void SetIntakeRoller(double power);
   void SetBallStorageBelt(double power);
   void SetShooterFeeder(double power);
-  void SetIntakeLift(bool intakeDown);
+  bool SetIntakeLift(bool intakeDown, bool firstTime);
   void SetShooter(double power);
-  void SetShooterAngle(double power);
-  void SetTargetShooterAngle(double target);
+  void SetShooterTiltMotor(double power);
   std::string GetSensorColor();
   double GetSensorProximity();
   void UpdateNTE();
@@ -41,7 +40,7 @@ private:
   frc::Color detectedColor;
   uint32_t proximity;
   std::string returnColor;
-
+  double encoderStartingConfig = 0.0;
 
   // Declaring Motorcontrolers
   WPI_VictorSPX intakeRollerMotor{8};
@@ -52,7 +51,7 @@ private:
   WPI_VictorSPX shooterMotor1{14};
   WPI_VictorSPX shooterMotor2{15};
   WPI_VictorSPX shooterMotor3{16};
-  WPI_VictorSPX shooterAngleMotor{13};
+  WPI_VictorSPX shooterTiltMotor{13};
   
   // Declaring spark max encoders
   rev::SparkMaxRelativeEncoder ballStorageEncoder{ballStorageBeltMotor.GetEncoder()};

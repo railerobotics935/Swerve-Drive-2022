@@ -43,13 +43,19 @@ RobotFunction::RobotFunction()
   shooterMotor1.ConfigFactoryDefault();
   shooterMotor2.ConfigFactoryDefault();
   shooterMotor3.ConfigFactoryDefault();
-  shooterAngleMotor.ConfigFactoryDefault();
+  shooterTiltMotor.ConfigFactoryDefault();
 
   // Reset the encoder
   intakeLiftEncoder.Reset();
   shooterTiltEncoder.Reset();
+
 }
 
+void RobotFunction::Init()
+{
+  // Set initial encoder
+  encoderStartingConfig = intakeLiftEncoder.Get();
+}
 // Set power for Intake Roller
 void RobotFunction::SetIntakeRoller(double power)
 {
@@ -75,49 +81,46 @@ void RobotFunction::SetShooter(double power)
 }
 
 // Set power for shooter angle
-void RobotFunction::SetShooterAngle(double power)
+void RobotFunction::SetShooterTiltMotor(double power)
 {
   if(shooterTiltEncoder.Get() > 400)
     power = 0;
   if(shooterTiltEncoder.Get() < 0)
     power = 0;
-  shooterAngleMotor.Set(power);
+  shooterTiltMotor.Set(power);
 }
 
 // Moves the intake lift either up or down depending on the previous pos
-void RobotFunction::SetIntakeLift(bool intakeDown)
+bool RobotFunction::SetIntakeLift(bool intakeDown, bool firstTime)
 {
-  if(intakeDown)
+  if(!intakeDown)
   {
+    if(firstTime)
+    {
+      if(abs(intakeLiftEncoder.Get() - encoderStartingConfig) < 40)
+        intakeLiftMotorR.Set(-0.2);
+      else
+        intakeLiftMotorR.Set(0.0);
+    }
+    else{
     if(intakeLiftEncoder.Get() > 70)
       intakeLiftMotorR.Set(-0.2);
     else
       intakeLiftMotorR.Set(0);
+    }
   }
   else
   {
+    if(firstTime){
+      intakeLiftEncoder.Reset();
+      firstTime = false;
+    }
     if(intakeLiftEncoder.Get() < 250)
       intakeLiftMotorR.Set(0.5);
     else
       intakeLiftMotorR.Set(0);
   }
-}
-
-// Sets the shooter to a target
-void RobotFunction::SetTargetShooterAngle(double target)
-{
-
-  if(target > -30 && target < 600)
-  {  
-    if(shooterTiltEncoder.Get() < target - 20)
-      shooterAngleMotor.Set(-1.0);
-    else if(shooterTiltEncoder.Get() > target + 20)
-      shooterAngleMotor.Set(1.0);
-    else 
-      shooterAngleMotor.Set(0.0);
-  }
-  else
-    shooterAngleMotor.Set(0.0);
+  return firstTime;
 }
 
 // Sets Color values to Networktables and returns red or blue
@@ -167,14 +170,18 @@ void RobotFunction::ResetTiltEncoder()
   if(tiltSwitch.Get())
   {
     shooterTiltEncoder.Reset();
-    shooterAngleMotor.Set(0.0);
+    shooterTiltMotor.Set(0.0);
   }
   else
-    shooterAngleMotor.Set(-1.0);
+    shooterTiltMotor.Set(1.0);
 }
 
+// NOTE: Positive Power makes the shooter go tward the limit switch
 void RobotFunction::SafetyShooterStop()
 {
-  if(tiltSwitch.Get())
-    shooterAngleMotor.Set(0.0);
+  // Saftey stops for shooter
+  if(shooterTiltMotor.Get() > 0.0 && tiltSwitch.Get())
+    shooterTiltMotor.Set(0.0);
+  if(shooterTiltMotor.Get() < 0.0 && shooterTiltEncoder.Get() > 600)
+    shooterTiltMotor.Set(0.0);
 }

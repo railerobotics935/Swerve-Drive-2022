@@ -44,9 +44,15 @@ void Robot::RobotInit()
 
 void Robot::RobotPeriodic() {}
 
-void Robot::AutonomousInit() {}
+void Robot::AutonomousInit() {
+  if(firstTime)
+    m_robotFunction.Init();
+}
 
-void Robot::AutonomousPeriodic() {}
+void Robot::AutonomousPeriodic() {
+  firstTime = m_robotFunction.SetIntakeLift(intakeDown, firstTime);
+}
+
 
 void Robot::TeleopInit()
 {
@@ -54,11 +60,12 @@ void Robot::TeleopInit()
   frc::Pose2d m_Pose{(units::meter_t)0.0, (units::meter_t)0.0, frc::Rotation2d((units::radian_t)0.0)};
   m_drive.ResetOdometry(m_Pose);
   CreateYawPID();
+  if(firstTime)
+    m_robotFunction.Init();
 }
 
 void Robot::TeleopPeriodic()
 {
-  m_robotFunction.ResetTiltEncoder();
   // Switching between robot relative and field relative (blue)
   if (m_driveController.GetRawButtonPressed(1))
   {
@@ -107,8 +114,6 @@ void Robot::TeleopPeriodic()
   // Update nte
   m_robotFunction.UpdateNTE();
 
-  // Saftey stops
-  m_robotFunction.SafetyShooterStop();
   
   //------------------------------------------------------------
   // PIXY STUFF
@@ -168,17 +173,6 @@ void Robot::DriveWithJoystick(bool fieldRelative)
 
   m_field.SetRobotPose(m_drive.GetPose());
 
-  
-/*
-  // Control for ball storage 
-  if(m_OpController.GetRawButton(6))
-    m_robotFunction.SetBallStorageBelt(0.75);
-  else if(m_OpController.GetRawButton(5))
-    m_robotFunction.SetBallStorageBelt(-0.75);
-  else
-    m_robotFunction.SetBallStorageBelt(0.0);
-*/
-
   //Control for shooter feeder and shooter - linked
   if(m_OpController.GetRawButtonPressed(4))
   {
@@ -219,32 +213,16 @@ void Robot::DriveWithJoystick(bool fieldRelative)
   if(m_OpController.GetRawButtonPressed(1))
     intakeDown = !intakeDown;
   
-  m_robotFunction.SetIntakeLift(intakeDown);
-
-/*
-  // Control for shooter
-  if(m_OpController.GetRawButton(3))
-    m_robotFunction.SetShooter(1.0);
+  firstTime = m_robotFunction.SetIntakeLift(intakeDown, firstTime);
+  
+  // Control to reset the Tilt encoder
+  if(m_OpController.GetRawButton(10))
+    m_robotFunction.ResetTiltEncoder();
   else
-    m_robotFunction.SetShooter(0.0);
-*/ 
-  // Control for shooter angle
-  if(m_OpController.GetRawButton(5))
-    m_robotFunction.SetTargetShooterAngle(50);
-  else if(m_OpController.GetRawButton(6))
-    m_robotFunction.SetTargetShooterAngle(300);
-  else
-    m_robotFunction.SetShooterAngle(frc::ApplyDeadband(m_OpController.GetRawAxis(1)*0.5, 0.05)); 
+    m_robotFunction.SetShooterTiltMotor(frc::ApplyDeadband(m_OpController.GetRawAxis(1)*0.5, 0.05)); 
 
-/*
-  // Control for shooter feeder - press once to turn on, press again to turn off
-  if(m_OpController.GetRawButtonPressed(4))
-    shooterOn = !shooterOn;
-    if(shooterOn)
-      shooterFeeder.Set(0.5);
-    else
-      shooterFeeder.Set(0.0);
-*/
+  // Saftey stops
+  m_robotFunction.SafetyShooterStop();
 }
 
 void Robot::SimulationPeriodic()
