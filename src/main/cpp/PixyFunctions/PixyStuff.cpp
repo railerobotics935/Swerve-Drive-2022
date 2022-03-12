@@ -20,6 +20,8 @@
 
 using namespace std;
 
+int i;
+
 PIXY_BLOCK_TYPE filtered_blocks[MAX_VALID_BLOCKS];
 PIXY_BLOCK_TYPE read_blocks[MAX_NR_OF_BLOCKS];
 
@@ -103,7 +105,7 @@ int PixyProcessData(int n_bytes_read, char uartbuffer[])
 void blockDataHandler(uint8_t camera_number, uint32_t camera_timestamp, uint8_t n_parsed_blocks, PIXY_BLOCK_TYPE *parsed_blocks)
 {
   int target_index = -1;
-
+  int i = -1;
 #ifdef DEBUG_CAMERA_ONE
   std::cout << "block data handler " << int(n_parsed_blocks);
   std::cout << " timestamp " << int(camera_timestamp);

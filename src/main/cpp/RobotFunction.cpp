@@ -47,7 +47,7 @@ RobotFunction::RobotFunction()
 
   // Reset the encoder
   intakeLiftEncoder.Reset();
-  shooterAngleEncoder.Reset();
+  shooterTiltEncoder.Reset();
 }
 
 // Set power for Intake Roller
@@ -77,9 +77,9 @@ void RobotFunction::SetShooter(double power)
 // Set power for shooter angle
 void RobotFunction::SetShooterAngle(double power)
 {
-  if(shooterAngleEncoder.Get() > 400)
+  if(shooterTiltEncoder.Get() > 400)
     power = 0;
-  if(shooterAngleEncoder.Get() < 0)
+  if(shooterTiltEncoder.Get() < 0)
     power = 0;
   shooterAngleMotor.Set(power);
 }
@@ -109,9 +109,9 @@ void RobotFunction::SetTargetShooterAngle(double target)
 
   if(target > -30 && target < 600)
   {  
-    if(shooterAngleEncoder.Get() < target - 20)
+    if(shooterTiltEncoder.Get() < target - 20)
       shooterAngleMotor.Set(-1.0);
-    else if(shooterAngleEncoder.Get() > target + 20)
+    else if(shooterTiltEncoder.Get() > target + 20)
       shooterAngleMotor.Set(1.0);
     else 
       shooterAngleMotor.Set(0.0);
@@ -148,7 +148,7 @@ void RobotFunction::UpdateNTE()
 {
   // Get encoder values
   nte_intakeLiftEncoderValue.SetDouble(intakeLiftEncoder.Get());
-  nte_shooterAngleEncoderValue.SetDouble(shooterAngleEncoder.Get());
+  nte_shooterAngleEncoderValue.SetDouble(shooterTiltEncoder.Get());
 
   // Get color and proximity from the color sensor
   detectedColor = colorSensor.GetColor();
@@ -159,4 +159,22 @@ void RobotFunction::UpdateNTE()
   nte_colorSensorRed.SetDouble(detectedColor.red);
   nte_colorSensorGreen.SetDouble(detectedColor.green);
   nte_colorSensorBlue.SetDouble(detectedColor.blue);
+}
+
+// Function to reset the 
+void RobotFunction::ResetTiltEncoder()
+{
+  if(tiltSwitch.Get())
+  {
+    shooterTiltEncoder.Reset();
+    shooterAngleMotor.Set(0.0);
+  }
+  else
+    shooterAngleMotor.Set(-1.0);
+}
+
+void RobotFunction::SafetyShooterStop()
+{
+  if(tiltSwitch.Get())
+    shooterAngleMotor.Set(0.0);
 }

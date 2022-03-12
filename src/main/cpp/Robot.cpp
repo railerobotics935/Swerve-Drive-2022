@@ -58,6 +58,7 @@ void Robot::TeleopInit()
 
 void Robot::TeleopPeriodic()
 {
+  m_robotFunction.ResetTiltEncoder();
   // Switching between robot relative and field relative (blue)
   if (m_driveController.GetRawButtonPressed(1))
   {
@@ -103,15 +104,22 @@ void Robot::TeleopPeriodic()
     printf("End of automation\n\r"); 
   }
 
-    // Update nte
-    m_robotFunction.UpdateNTE();
+  // Update nte
+  m_robotFunction.UpdateNTE();
+
+  // Saftey stops
+  m_robotFunction.SafetyShooterStop();
+  
+  //------------------------------------------------------------
+  // PIXY STUFF
+  //------------------------------------------------------------
 
   // Get Teensy/Pixy information from RoboRIO expansion port
   //		blockDataHandler(camera_number, camera_timestamp, n_parsed_blocks, *parsed_blocks);
       int n_bytes_read = 0;
-      n_bytes_read = mxp_serial_port.Read(nmea_tx_buf, 1000);
+      //n_bytes_read = mxp_serial_port.Read(nmea_tx_buf, 1000);
 
-      PixyProcessData (n_bytes_read, nmea_tx_buf);
+      //PixyProcessData (n_bytes_read, nmea_tx_buf);
   #ifdef PRINT_BLOCK_DATA		
       if (n_bytes_read > 0)
       {

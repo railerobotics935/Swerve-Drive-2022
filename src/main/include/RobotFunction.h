@@ -13,6 +13,7 @@
 #include <frc/Encoder.h>
 #include <frc/I2C.h>
 #include <rev/ColorSensorV3.h>
+#include <frc/DigitalInput.h>
 
 #include "ctre/phoenix.h"
 
@@ -32,6 +33,8 @@ public:
   std::string GetSensorColor();
   double GetSensorProximity();
   void UpdateNTE();
+  void ResetTiltEncoder();
+  void SafetyShooterStop();
 
 private:
   // Declaring Local variables
@@ -62,7 +65,10 @@ private:
   // Declaring encoders for intake lift and shooter angle. 
   //Gear Ratio for the motor is 188:1 and encoder revoluiton is 7
   frc::Encoder intakeLiftEncoder{0, 1};
-  frc::Encoder shooterAngleEncoder{2, 3, true};
+  frc::Encoder shooterTiltEncoder{2, 3, true};
+  
+  // Tilt limit switch
+  frc::DigitalInput tiltSwitch{4};
 
   // Declaring Network Table Entrys
   nt::NetworkTableEntry nte_intakeLiftEncoderValue;
