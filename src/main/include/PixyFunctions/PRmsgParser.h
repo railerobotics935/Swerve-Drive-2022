@@ -20,6 +20,7 @@ enum
   NMEA_PRLED,	// control LEDs
   NMEA_PRBLK, // pixy camera blocks
   NMEA_PRTUR, // turret sensors
+  NMEA_PRTGA, // 2022 target offset angle
   NR_OF_NMEA_MSGS
 };
 
@@ -48,7 +49,7 @@ typedef void (*prawshandlerptr)(float left, float right, uint8_t auto_drive, flo
 typedef void (*prledhandlerptr)(uint8_t led_ring_on, uint8_t upper_on, uint8_t lower_on);
 typedef void (*prblkhandlerptr)(uint8_t camera_number, uint32_t camera_timestamp, uint8_t n_blocks, PIXY_BLOCK_TYPE *blocks);
 typedef void (*prturhandlerptr)(uint32_t turret_timestamp, uint16_t kickwheel_speed, uint16_t hood_angle_1, uint16_t hood_angle_2, int target_distance);
-
+typedef void (*prtgahandlerptr)(uint32_t target_offset_angle);
 
 class PRmsgParser
 {
@@ -87,11 +88,14 @@ private:
   uint16_t hood_angle_2;
   int target_distance;
 
+  uint16_t target_angle_offset;
+
 //  handlerptr nmeaHandlerPtr[NR_OF_NMEA_HANDLERS];
   prawshandlerptr prawsHandlerPtr;
   prledhandlerptr prledHandlerPtr;
   prblkhandlerptr prblkHandlerPtr;
   prturhandlerptr prturHandlerPtr;
+  prtgahandlerptr prtgaHandlerPtr;
 
   void parseSentenceChar(char inChar);
 
@@ -103,6 +107,7 @@ public:
   void setPRLEDEventHandler(prledhandlerptr userHandlerPtr);
   void setPRBLKEventHandler(prblkhandlerptr userHandlerPtr);
   void setPRTUREventHandler(prturhandlerptr userHandlerPtr);
+  void setPRTGAEventHandler(prtgahandlerptr userHandlerPtr);
 
   void resetEventHandler(uint8_t event);
   void parseChar(char inChar);

@@ -49,6 +49,7 @@ RobotFunction::RobotFunction()
   intakeLiftEncoder.Reset();
   shooterTiltEncoder.Reset();
 
+  ClimbStopServo.SetAngle(0.0);
 }
 
 void RobotFunction::Init()
@@ -184,4 +185,14 @@ void RobotFunction::SafetyShooterStop()
     shooterTiltMotor.Set(0.0);
   if(shooterTiltMotor.Get() < 0.0 && shooterTiltEncoder.Get() > 600)
     shooterTiltMotor.Set(0.0);
+}
+
+void RobotFunction::TestServo(double angle)
+{
+  ClimbStopServo.SetAngle(angle);
+}
+
+void RobotFunction::SetClimbMotorPower(double power)
+{
+  climbMotor.Set(power);
 }

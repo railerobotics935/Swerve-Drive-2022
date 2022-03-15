@@ -33,6 +33,8 @@ unsigned int delta_x;
 float exp_filter_constant;
 float exp_filter_oneMinConst;
 
+float currentTargetAngleOffset = 0.0;
+
 // module local turret data variables
 static bool target_visible_;
 static int target_lateral_pos_;
@@ -60,8 +62,7 @@ nt::NetworkTableEntry nte_xCenterOfTarget;
 nt::NetworkTableEntry nte_centerTargetNum;
 nt::NetworkTableEntry nte_target_visible;
 
-void blockDataHandler(uint8_t camera_number, uint32_t camera_timestamp, uint8_t n_parsed_blocks, 
-                        PIXY_BLOCK_TYPE *parsed_blocks);
+void blockDataHandler(uint32_t target_angle_offset);
 
 void PixyStuffInit(string nt_table_name) 
 {
@@ -70,7 +71,7 @@ void PixyStuffInit(string nt_table_name)
   exp_filter_oneMinConst = 1.0 - exp_filter_constant;
 
   // Initialize Serial Data handlers
-  myPRmsgParser.setPRBLKEventHandler(blockDataHandler);
+  myPRmsgParser.setPRTGAEventHandler(blockDataHandler);
 
   // Setup network table entries for visualizing Pixy/Teensy data
 	auto nt_inst = nt::NetworkTableInstance::GetDefault();
@@ -95,6 +96,7 @@ int PixyProcessData(int n_bytes_read, char uartbuffer[])
 
   while (buffer_index < n_bytes_read)
   {
+    printf("processing\r\n");
     myPRmsgParser.parseChar(uartbuffer[buffer_index]);
     buffer_index++;
   }
@@ -102,55 +104,10 @@ int PixyProcessData(int n_bytes_read, char uartbuffer[])
   return 0;
 }
 
-void blockDataHandler(uint8_t camera_number, uint32_t camera_timestamp, uint8_t n_parsed_blocks, PIXY_BLOCK_TYPE *parsed_blocks)
+void blockDataHandler(uint32_t target_angle_offset)
 {
-  int target_index = -1;
-  int i = -1;
-#ifdef DEBUG_CAMERA_ONE
-  std::cout << "block data handler " << int(n_parsed_blocks);
-  std::cout << " timestamp " << int(camera_timestamp);
-  for (i=0; i<n_parsed_blocks; i++)
-  {
-    std::cout << "," << int(parsed_blocks[i].sig);
-    std::cout << "," << int(parsed_blocks[i].x);
-    std::cout << "," << int(parsed_blocks[i].y);
-    std::cout << "," << int(parsed_blocks[i].w);
-    std::cout << "," << int(parsed_blocks[i].h);
-  }
-  std::cout << std::endl;
-#endif 
-  target_index = -1;
-
-  for (uint8_t i=0; i<n_parsed_blocks; i++)
-  {
-    if (1 == parsed_blocks[i].sig)
-    {
-      target_index = i;
-      i = n_parsed_blocks;
-    }
-  }
-
-  if (target_index >= 0 && parsed_blocks[target_index].w != 0)
-  { 
-    double center_number_target = nte_centerTargetNum.GetDouble(200.0);     
-    target_visible_ = true;
-    target_lateral_pos_ = (int)center_number_target - (int)(parsed_blocks[target_index].x + (parsed_blocks[target_index].w/2));
-    nte_target_data_x.SetDouble(parsed_blocks[target_index].x);
-    nte_target_data_y.SetDouble(parsed_blocks[target_index].y);
-    nte_target_data_w.SetDouble(parsed_blocks[target_index].w);
-    nte_target_data_h.SetDouble(parsed_blocks[target_index].h);
-    nte_target_visible.SetDouble(1);
-  }
-  else
-  {
-    target_visible_ = false;
-    target_lateral_pos_ = 0;
-    nte_target_data_x.SetDouble(0);
-    nte_target_data_y.SetDouble(0);
-    nte_target_data_w.SetDouble(0);
-    nte_target_data_h.SetDouble(0);
-    nte_target_visible.SetDouble(0);
-  }
+  //currentTargetAngleOffset = target_angle_offset;
+  //printf("%.0f\r\n", target_angle_offset);
 }
 
 void CreateYawPID()

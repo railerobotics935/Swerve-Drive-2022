@@ -78,6 +78,11 @@ void PRmsgParser::setPRTUREventHandler(prturhandlerptr userHandlerPtr)
   prturHandlerPtr = userHandlerPtr;
 }
 
+void PRmsgParser::setPRTGAEventHandler(prtgahandlerptr userHandlerPtr)
+/****************************************************************************/
+{
+  prtgaHandlerPtr = userHandlerPtr;
+}
 
 /****************************************************************************/
 void PRmsgParser::resetEventHandler(uint8_t event)
@@ -177,8 +182,15 @@ uint8_t i;
       if (prturHandlerPtr != NULL)
         prturHandlerPtr(turret_timestamp, kickwheel_speed, hood_angle_1, hood_angle_2, target_distance);
       break;
-    }
-    break;
+    
+    case NMEA_PRTGA:
+      // call handler for turret data processing
+      if (prtgaHandlerPtr != NULL)
+        prtgaHandlerPtr(target_angle_offset);
+      break;
+    
+  }
+  break;
 
   case 13 : // return
     BReadSentence = false;
@@ -265,6 +277,14 @@ void PRmsgParser::parseSentenceChar(char inChar)
       if (strcmp(ItemBuf,"PRTUR") == 0)
       {
         CurrentMessageType = NMEA_PRTUR;
+        block_parse_index = 0;
+        ItemBuf[0] = '\0';
+        return;
+      }
+
+      if (strcmp(ItemBuf,"PRTGA") == 0)
+      {
+        CurrentMessageType = NMEA_PRTGA;
         block_parse_index = 0;
         ItemBuf[0] = '\0';
         return;
@@ -377,10 +397,22 @@ void PRmsgParser::parseSentenceChar(char inChar)
           if (ItemBufIndex > 0) target_distance = atoi(ItemBuf);
           break;
         }
-        
+        break;
+
+      case NMEA_PRTGA:
+        switch (CurrentMessageItem)
+		    {
+        case 1: // Turret timestamp
+          if (ItemBufIndex > 0)
+            target_angle_offset = atof(ItemBuf);
+          else
+            target_angle_offset = 0.0;
+          break;
+        }
+
         break;
       }
-
+      
       CurrentMessageItem++;
     }
     ItemBufIndex = 0;

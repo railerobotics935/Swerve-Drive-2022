@@ -14,7 +14,7 @@
 #include <frc/I2C.h>
 #include <rev/ColorSensorV3.h>
 #include <frc/DigitalInput.h>
-
+#include <frc/Servo.h>
 #include "ctre/phoenix.h"
 
 
@@ -33,8 +33,9 @@ public:
   double GetSensorProximity();
   void UpdateNTE();
   void ResetTiltEncoder();
-  void SafetyShooterStop();
-
+  void SafetyShooterStop(); 
+  void TestServo(double angle);
+  void SetClimbMotorPower(double power);
 private:
   // Declaring Local variables
   frc::Color detectedColor;
@@ -48,6 +49,7 @@ private:
   WPI_VictorSPX intakeLiftMotorL{10};
   rev::CANSparkMax ballStorageBeltMotor{11, rev::CANSparkMax::MotorType::kBrushless};
   rev::CANSparkMax shooterFeederMotor{12, rev::CANSparkMax::MotorType::kBrushless};
+  rev::CANSparkMax climbMotor{17, rev::CANSparkMax::MotorType::kBrushless};
   WPI_VictorSPX shooterMotor1{14};
   WPI_VictorSPX shooterMotor2{15};
   WPI_VictorSPX shooterMotor3{16};
@@ -68,6 +70,9 @@ private:
   
   // Tilt limit switch
   frc::DigitalInput tiltSwitch{4};
+
+  // Climber servo
+  frc::Servo ClimbStopServo{0};
 
   // Declaring Network Table Entrys
   nt::NetworkTableEntry nte_intakeLiftEncoderValue;

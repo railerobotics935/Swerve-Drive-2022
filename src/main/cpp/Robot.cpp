@@ -28,7 +28,7 @@
 #define AXIS1_Y 0
 #define AXIS2_X 2
 #endif
-//#define PRINT_BLOCK_DATA
+#define PRINT_BLOCK_DATA
 
 void Robot::RobotInit()
 {
@@ -122,9 +122,9 @@ void Robot::TeleopPeriodic()
   // Get Teensy/Pixy information from RoboRIO expansion port
   //		blockDataHandler(camera_number, camera_timestamp, n_parsed_blocks, *parsed_blocks);
       int n_bytes_read = 0;
-      //n_bytes_read = mxp_serial_port.Read(nmea_tx_buf, 1000);
+      n_bytes_read = mxp_serial_port.Read(nmea_tx_buf, 1000);
 
-      //PixyProcessData (n_bytes_read, nmea_tx_buf);
+      PixyProcessData (n_bytes_read, nmea_tx_buf);
   #ifdef PRINT_BLOCK_DATA		
       if (n_bytes_read > 0)
       {
@@ -223,6 +223,11 @@ void Robot::DriveWithJoystick(bool fieldRelative)
   else
     m_robotFunction.SetShooterTiltMotor(frc::ApplyDeadband(m_OpController.GetRawAxis(1)*0.5, 0.05)); 
 
+  // Test servo
+  if(m_driveController.GetRawButton(10))
+    m_robotFunction.TestServo(90.0);
+  else
+    m_robotFunction.TestServo(0.0);
   // Saftey stops
   m_robotFunction.SafetyShooterStop();
 }
