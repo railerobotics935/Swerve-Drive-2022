@@ -29,6 +29,7 @@ public:
   bool SetIntakeLift(bool intakeDown, bool firstTime);
   void SetShooter(double power);
   void SetShooterTiltMotor(double power);
+  void SetShooterTiltPos(double pos);
   std::string GetSensorColor();
   double GetSensorProximity();
   void UpdateNTE();
@@ -36,6 +37,7 @@ public:
   void SafetyShooterStop(); 
   void TestServo(double angle);
   void SetClimbMotorPower(double power);
+
 private:
   // Declaring Local variables
   frc::Color detectedColor;

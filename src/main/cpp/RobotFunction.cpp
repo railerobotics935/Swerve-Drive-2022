@@ -84,11 +84,18 @@ void RobotFunction::SetShooter(double power)
 // Set power for shooter angle
 void RobotFunction::SetShooterTiltMotor(double power)
 {
-  if(shooterTiltEncoder.Get() > 400)
-    power = 0;
-  if(shooterTiltEncoder.Get() < 0)
-    power = 0;
   shooterTiltMotor.Set(power);
+}
+
+// Set pos for shooter angle based on the encoder value
+void RobotFunction::SetShooterTiltPos(double pos)
+{
+  if(shooterTiltEncoder.Get() > pos + 10)
+    shooterTiltMotor.Set(0.5);
+  else if(shooterTiltEncoder.Get() < pos - 10)
+    shooterTiltMotor.Set(-0.5);
+  else
+    shooterTiltMotor.Set(0.0);
 }
 
 // Moves the intake lift either up or down depending on the previous pos
@@ -171,6 +178,7 @@ void RobotFunction::ResetTiltEncoder()
   if(tiltSwitch.Get())
   {
     shooterTiltEncoder.Reset();
+    printf("encoder Reset in reset function\r\n");
     shooterTiltMotor.Set(0.0);
   }
   else

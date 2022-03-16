@@ -36,7 +36,7 @@ private:
   static constexpr double kGearRatio = 6.67;
 
   static constexpr auto kModuleMaxAngularVelocity = 8.0 * wpi::numbers::pi * 1_rad_per_s;  // radians per second
-  static constexpr auto kModuleMaxAngularAcceleration = 4.0 * wpi::numbers::pi * 2_rad_per_s / 1_s;  // radians per second^2
+  static constexpr auto kModuleMaxAngularAcceleration = 6.0 * wpi::numbers::pi * 2_rad_per_s / 1_s;  // radians per second^2
 
   rev::CANSparkMax m_driveMotor;
   WPI_VictorSPX m_turningMotor;
