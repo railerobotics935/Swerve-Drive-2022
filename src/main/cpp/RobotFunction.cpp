@@ -22,8 +22,8 @@ RobotFunction::RobotFunction()
 
   // Set intakeLiftMotorL to follow intakeLiftMotorR
   intakeLiftMotorL.Follow(intakeLiftMotorR);
-  intakeLiftMotorR.SetInverted(false);
-  intakeLiftMotorL.SetInverted(ctre::phoenix::motorcontrol::InvertType::OpposeMaster); // Set left to mirror right
+  intakeLiftMotorL.SetInverted(true);
+  intakeLiftMotorR.SetInverted(ctre::phoenix::motorcontrol::InvertType::OpposeMaster); // Set left to mirror right
 
   // Set shooterMotor2 and shooterMotor3 to follow shooterMotor1
   shooterMotor2.Follow(shooterMotor1);
@@ -106,15 +106,15 @@ bool RobotFunction::SetIntakeLift(bool intakeDown, bool firstTime)
     if(firstTime)
     {
       if(abs(intakeLiftEncoder.Get() - encoderStartingConfig) < 40)
-        intakeLiftMotorR.Set(-0.2);
+        intakeLiftMotorL.Set(-0.2);
       else
-        intakeLiftMotorR.Set(0.0);
+        intakeLiftMotorL.Set(0.0);
     }
     else{
     if(intakeLiftEncoder.Get() > 70)
-      intakeLiftMotorR.Set(-0.2);
+      intakeLiftMotorL.Set(-0.2);
     else
-      intakeLiftMotorR.Set(0);
+      intakeLiftMotorL.Set(0);
     }
   }
   else
@@ -124,9 +124,9 @@ bool RobotFunction::SetIntakeLift(bool intakeDown, bool firstTime)
       firstTime = false;
     }
     if(intakeLiftEncoder.Get() < 250)
-      intakeLiftMotorR.Set(0.5);
+      intakeLiftMotorL.Set(0.5);
     else
-      intakeLiftMotorR.Set(0);
+      intakeLiftMotorL.Set(0);
   }
   return firstTime;
 }

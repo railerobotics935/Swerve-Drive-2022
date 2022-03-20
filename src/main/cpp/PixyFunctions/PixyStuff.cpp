@@ -33,7 +33,7 @@ unsigned int delta_x;
 float exp_filter_constant;
 float exp_filter_oneMinConst;
 
-float currentTargetAngleOffset = 0.0;
+double currentTargetAngleOffset = 0.0;
 
 // module local turret data variables
 static bool target_visible_;
@@ -62,7 +62,7 @@ nt::NetworkTableEntry nte_xCenterOfTarget;
 nt::NetworkTableEntry nte_centerTargetNum;
 nt::NetworkTableEntry nte_target_visible;
 
-void blockDataHandler(uint32_t target_angle_offset);
+void blockDataHandler(double target_angle_offset);
 
 void PixyStuffInit(string nt_table_name) 
 {
@@ -104,10 +104,10 @@ int PixyProcessData(int n_bytes_read, char uartbuffer[])
   return 0;
 }
 
-void blockDataHandler(uint32_t target_angle_offset)
+void blockDataHandler(double target_angle_offset)
 {
-  //currentTargetAngleOffset = target_angle_offset;
-  //printf("%.0f\r\n", target_angle_offset);
+  currentTargetAngleOffset = target_angle_offset;
+  printf("%.00f\r\n", target_angle_offset);
 }
 
 void CreateYawPID()

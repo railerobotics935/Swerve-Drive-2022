@@ -1,10 +1,11 @@
 // Copyright (c) FIRST and other WPILib contributors.
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
-#include "Robot.h"
+
+//This is the main robot program for the frc 2022 robot competition
+
 
 #include <iostream>
-
 #include <ctre/phoenix/motorcontrol/InvertType.h>
 #include <frc/MathUtil.h>
 #include <frc/XboxController.h>
@@ -15,8 +16,8 @@
 #include <frc/shuffleboard/ShuffleboardTab.h>
 
 #include "PixyFunctions/PixyStuff.h"
+#include "Robot.h"
 
-//#include "Drivetrain.h"
 
 //#define ALAN_CONTROL
 #ifdef  ALAN_CONTROL
@@ -28,17 +29,50 @@
 #define AXIS1_Y 0
 #define AXIS2_X 2
 #endif
+
+
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+// DEFINE AUTOS - position is based on the persepcive of the drive
+
+#define RIGHT_AUTO
+//#define CENTER_AUTO
+//#define LEFT_AUTO
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+
+
+
+// Safty stop for right auto
+#ifdef RIGHT_AUTO
+#undef CENTER_AUTO
+#undef LEFT_AUTO
+#endif
+
+// Safty stop for center auto
+#ifdef CENTER_AUTO
+#undef RIGHT_AUTO
+#undef LEFT_AUTO
+#endif
+
+// Safty stop for left auto
+#ifdef LEFT_AUTO
+#undef CENTER_AUTO
+#undef RIGHT_AUTO
+#endif
 //#define PRINT_BLOCK_DATA
 
 void Robot::RobotInit()
 {
-  m_fieldRelative = true;
-
-  shooterOn = false;
+  m_fieldRelative = false;
 
   // Initialize the 2D field widget
   frc::SmartDashboard::PutData("Field", &m_field);
-  
+
+  // Don't wait for serial data
+  mxp_serial_port.SetTimeout(units::time::second_t(0));
+
   PixyStuffInit("datatable");
 }
 
@@ -47,10 +81,56 @@ void Robot::RobotPeriodic() {}
 void Robot::AutonomousInit() {
   if(firstTime)
     m_robotFunction.Init();
+  
+  // Reset timer
+  autoTimer.Reset();
+  autoTimer.Start();
+  shooterTimer.Reset();
+  shooterTimer.Start();
 }
 
 void Robot::AutonomousPeriodic() {
   firstTime = m_robotFunction.SetIntakeLift(intakeDown, firstTime);
+
+  // Shoot ball
+  if(autoTimer.Get() < (units::second_t) 3)
+  {
+    m_robotFunction.SetShooterTiltPos(390);
+    m_robotFunction.SetShooter(1.0);
+    if(shooterTimer.Get() > (units::second_t) 1.5)
+    {
+      m_robotFunction.SetBallStorageBelt(0.75);
+      m_robotFunction.SetShooterFeeder(1.0);
+    }
+  }
+  else
+  {
+    m_robotFunction.SetShooter(0.0);
+    m_robotFunction.SetBallStorageBelt(0.0);
+    m_robotFunction.SetShooterFeeder(0.0);
+  }
+
+  if(autoTimer.Get() > (units::second_t) 3.0 && autoTimer.Get() < (units::second_t) 6.0)
+  {
+    m_drive.Drive((units::velocity::meters_per_second_t) 0.8, (units::velocity::meters_per_second_t)0.0, (units::angular_velocity::radians_per_second_t)0.0, m_fieldRelative);
+    m_robotFunction.SetIntakeRoller(0.0);
+  }
+  else
+  {
+    m_drive.Drive((units::velocity::meters_per_second_t)0.0, (units::velocity::meters_per_second_t)0.0, (units::angular_velocity::radians_per_second_t)0.0, true);
+    m_robotFunction.SetIntakeRoller(0.0);
+  }
+  //TODO: Find out direction to go for each pos, and write code to go out of area, and maybe even pick up a ball. 
+  // AUTO MOVEMENT
+#ifdef RIGHT_AUTO
+
+#endif
+#ifdef CENTER_AUTO
+
+#endif
+#ifdef LEFT_AUTO
+
+#endif
 }
 
 
@@ -62,6 +142,10 @@ void Robot::TeleopInit()
   CreateYawPID();
   if(firstTime)
     m_robotFunction.Init();
+  
+  m_robotFunction.SetBallStorageBelt(0.0);
+  m_robotFunction.SetShooterFeeder(0.0);
+  m_robotFunction.SetShooter(0.0);
 }
 
 void Robot::TeleopPeriodic()
@@ -114,24 +198,21 @@ void Robot::TeleopPeriodic()
   // Update nte
   m_robotFunction.UpdateNTE();
 
-  
   //------------------------------------------------------------
   // PIXY STUFF
   //------------------------------------------------------------
 
   // Get Teensy/Pixy information from RoboRIO expansion port
-  //		blockDataHandler(camera_number, camera_timestamp, n_parsed_blocks, *parsed_blocks);
-      int n_bytes_read = 0;
-     // n_bytes_read = mxp_serial_port.Read(nmea_tx_buf, 1000);
-
-      //PixyProcessData (n_bytes_read, nmea_tx_buf);
-  #ifdef PRINT_BLOCK_DATA		
-      if (n_bytes_read > 0)
-      {
-        nmea_tx_buf[n_bytes_read] = 0;
-          printf("Chassis data: %s\n", nmea_tx_buf);
-      }
-  #endif
+  n_serial_bytes_read = 0;
+  n_serial_bytes_read = mxp_serial_port.Read(nmea_serial_buf, 1000);
+  PixyProcessData(n_serial_bytes_read, nmea_serial_buf);
+#ifdef PRINT_BLOCK_DATA		
+  if (n_serial_bytes_read > 0)
+  {
+    nmea_serial_buf[n_serial_bytes_read] = 0;
+    printf("Chassis data: %s\n", nmea_serial_buf);
+  }
+#endif
 }
 
 void Robot::DisabledInit()
@@ -173,16 +254,33 @@ void Robot::DriveWithJoystick(bool fieldRelative)
 
   m_field.SetRobotPose(m_drive.GetPose());
 
-  //Control for shooter feeder and shooter - linked
+  // Reseting shooter Timers
   if(m_OpController.GetRawButtonPressed(4))
   {
-    ShooterTimer.Reset();
-    ShooterTimer.Start();
+    shooterTimer.Reset();
+    shooterTimer.Start();
   }
-  if(m_OpController.GetRawButton(4))
+  if(m_OpController.GetRawButtonPressed(3))
   {
+    lowerShooterTimer.Reset();
+    lowerShooterTimer.Start();
+  }
+
+  // lower hub shooter
+  if(m_OpController.GetRawButton(3))
+  {
+     m_robotFunction.SetShooter(0.4);
+    if(lowerShooterTimer.Get() > (units::second_t) 0.5)
+    {
+      m_robotFunction.SetBallStorageBelt(0.75);
+      m_robotFunction.SetShooterFeeder(1.0);
+    }
+  }
+  else if(m_OpController.GetRawButton(4))
+  {
+    // upper hub shooter
     m_robotFunction.SetShooter(1.0);
-    if(ShooterTimer.Get() > (units::second_t) 1.0)
+    if(shooterTimer.Get() > (units::second_t) 1.0)
     {
       m_robotFunction.SetBallStorageBelt(0.75);
       m_robotFunction.SetShooterFeeder(1.0);
@@ -234,7 +332,7 @@ void Robot::DriveWithJoystick(bool fieldRelative)
   if(m_OpController.GetRawButton(5))
     m_robotFunction.SetShooterTiltPos(300);
   if(m_OpController.GetRawButton(6))
-    m_robotFunction.SetShooterTiltPos(250);
+    m_robotFunction.SetShooterTiltPos(400);
 
   // Saftey stops
   m_robotFunction.SafetyShooterStop();

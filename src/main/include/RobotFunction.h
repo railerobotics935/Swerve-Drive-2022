@@ -67,7 +67,7 @@ private:
 
   // Declaring encoders for intake lift and shooter angle. 
   //Gear Ratio for the motor is 188:1 and encoder revoluiton is 7
-  frc::Encoder intakeLiftEncoder{0, 1};
+  frc::Encoder intakeLiftEncoder{0, 1, true};
   frc::Encoder shooterTiltEncoder{2, 3, true};
   
   // Tilt limit switch
