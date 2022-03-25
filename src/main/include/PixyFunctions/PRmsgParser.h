@@ -49,7 +49,7 @@ typedef void (*prawshandlerptr)(float left, float right, uint8_t auto_drive, flo
 typedef void (*prledhandlerptr)(uint8_t led_ring_on, uint8_t upper_on, uint8_t lower_on);
 typedef void (*prblkhandlerptr)(uint8_t camera_number, uint32_t camera_timestamp, uint8_t n_blocks, PIXY_BLOCK_TYPE *blocks);
 typedef void (*prturhandlerptr)(uint32_t turret_timestamp, uint16_t kickwheel_speed, uint16_t hood_angle_1, uint16_t hood_angle_2, int target_distance);
-typedef void (*prtgahandlerptr)(double target_offset_angle);
+typedef void (*prtgahandlerptr)(bool valid_blocks, double target_offset_angle, int target_distance);
 
 class PRmsgParser
 {
@@ -89,6 +89,7 @@ private:
   int target_distance;
 
   double target_angle_offset;
+  bool valid_blocks;
 
 //  handlerptr nmeaHandlerPtr[NR_OF_NMEA_HANDLERS];
   prawshandlerptr prawsHandlerPtr;

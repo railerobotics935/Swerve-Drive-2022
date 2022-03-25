@@ -57,12 +57,13 @@ nt::NetworkTableEntry nte_target_data_h;
 nt::NetworkTableEntry nte_yawKp;
 nt::NetworkTableEntry nte_yawKi;
 nt::NetworkTableEntry nte_yawKd;
-nt::NetworkTableEntry nte_yCenterOfTarget;
-nt::NetworkTableEntry nte_xCenterOfTarget;
 nt::NetworkTableEntry nte_centerTargetNum;
 nt::NetworkTableEntry nte_target_visible;
+nt::NetworkTableEntry nte_targetAngleOffset;
+nt::NetworkTableEntry nte_validBlock;
+nt::NetworkTableEntry nte_targetDistance;
 
-void blockDataHandler(double target_angle_offset);
+void targetDataHandler(bool valid_blocks, double target_angle_offset, int target_distance);
 
 void PixyStuffInit(string nt_table_name) 
 {
@@ -71,7 +72,7 @@ void PixyStuffInit(string nt_table_name)
   exp_filter_oneMinConst = 1.0 - exp_filter_constant;
 
   // Initialize Serial Data handlers
-  myPRmsgParser.setPRTGAEventHandler(blockDataHandler);
+  myPRmsgParser.setPRTGAEventHandler(targetDataHandler);
 
   // Setup network table entries for visualizing Pixy/Teensy data
 	auto nt_inst = nt::NetworkTableInstance::GetDefault();
@@ -83,10 +84,11 @@ void PixyStuffInit(string nt_table_name)
   nte_yawKp = nt_table->GetEntry("Yaw Pid/Kp");
   nte_yawKi = nt_table->GetEntry("Yaw Pid/Ki");
   nte_yawKd = nt_table->GetEntry("Yaw Pid/Kd");
-  nte_yCenterOfTarget = nt_table->GetEntry("Target Data/X Center");
-  nte_xCenterOfTarget = nt_table->GetEntry("Target Data/Y Center");
   nte_centerTargetNum = nt_table->GetEntry("Target/Center Target Number");
   nte_target_visible = nt_table->GetEntry("Target/Target Visible");
+  nte_targetAngleOffset = nt_table->GetEntry("Target/Target Angle Offset");
+  nte_validBlock = nt_table->GetEntry("Target/Valid Block");
+  nte_targetDistance = nt_table->GetEntry("Target/Target Distance");
 }
 
 int PixyProcessData(int n_bytes_read, char uartbuffer[])
@@ -96,7 +98,6 @@ int PixyProcessData(int n_bytes_read, char uartbuffer[])
 
   while (buffer_index < n_bytes_read)
   {
-    printf("processing\r\n");
     myPRmsgParser.parseChar(uartbuffer[buffer_index]);
     buffer_index++;
   }
@@ -104,10 +105,13 @@ int PixyProcessData(int n_bytes_read, char uartbuffer[])
   return 0;
 }
 
-void blockDataHandler(double target_angle_offset)
+void targetDataHandler(bool valid_blocks, double target_angle_offset, int target_distance)
 {
   currentTargetAngleOffset = target_angle_offset;
-  printf("%.00f\r\n", target_angle_offset);
+
+  nte_targetDistance.SetDouble(target_distance);
+  nte_targetAngleOffset.SetDouble(target_angle_offset);
+  nte_validBlock.SetBoolean(valid_blocks);
 }
 
 void CreateYawPID()

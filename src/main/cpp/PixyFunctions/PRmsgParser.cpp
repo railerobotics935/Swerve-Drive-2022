@@ -36,6 +36,7 @@ PRmsgParser::PRmsgParser()
   prledHandlerPtr = NULL;
   prblkHandlerPtr = NULL;
   prturHandlerPtr = NULL;
+  prtgaHandlerPtr = NULL;
 }
 
 /****************************************************************************/
@@ -186,7 +187,7 @@ uint8_t i;
     case NMEA_PRTGA:
       // call handler for turret data processing
       if (prtgaHandlerPtr != NULL)
-        prtgaHandlerPtr(target_angle_offset);
+        prtgaHandlerPtr(valid_blocks, target_angle_offset, target_distance);
       break;
     
   }
@@ -402,14 +403,21 @@ void PRmsgParser::parseSentenceChar(char inChar)
       case NMEA_PRTGA:
         switch (CurrentMessageItem)
 		    {
-        case 1: // Turret timestamp
+        case 1: // Valid Blocks
+          if (ItemBufIndex > 0)
+            valid_blocks = atoi(ItemBuf);
+          break;
+        case 2: // Target Angle offset
           if (ItemBufIndex > 0)
             target_angle_offset = atof(ItemBuf);
           else
             target_angle_offset = 0.0;
           break;
+        case 3: // Target Distance
+          if (ItemBufIndex > 0)
+            target_distance = atoi(ItemBuf);
+          break;
         }
-
         break;
       }
       

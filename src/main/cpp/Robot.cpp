@@ -74,6 +74,11 @@ void Robot::RobotInit()
   mxp_serial_port.SetTimeout(units::time::second_t(0));
 
   PixyStuffInit("datatable");
+
+  // Initialize shuffleboard communications
+  auto nt_inst = nt::NetworkTableInstance::GetDefault();
+  auto nt_table = nt_inst.GetTable("datatable");
+  nte_shooterPower = nt_table->GetEntry("Shooter/Power");
 }
 
 void Robot::RobotPeriodic() {}
@@ -136,6 +141,7 @@ void Robot::AutonomousPeriodic() {
 
 void Robot::TeleopInit()
 {
+  nte_shooterPower.SetDouble(8.0);
   // Resetting Pose2d and the odometry
   frc::Pose2d m_Pose{(units::meter_t)0.0, (units::meter_t)0.0, frc::Rotation2d((units::radian_t)0.0)};
   m_drive.ResetOdometry(m_Pose);
@@ -266,30 +272,24 @@ void Robot::DriveWithJoystick(bool fieldRelative)
     lowerShooterTimer.Start();
   }
 
-  // lower hub shooter
-  if(m_OpController.GetRawButton(3))
+if(m_OpController.GetRawButton(4))
   {
-     m_robotFunction.SetShooter(0.4);
-    if(lowerShooterTimer.Get() > (units::second_t) 0.5)
+    // upper hub shooter
+    shooterPower = nte_shooterPower.GetDouble(0.8);
+    m_robotFunction.SetShooter(nte_shooterPower.GetDouble(0.8));
+     if(m_OpController.GetRawButton(3))
     {
       m_robotFunction.SetBallStorageBelt(0.75);
       m_robotFunction.SetShooterFeeder(1.0);
     }
-  }
-  else if(m_OpController.GetRawButton(4))
-  {
-    // upper hub shooter
-    m_robotFunction.SetShooter(1.0);
-    if(shooterTimer.Get() > (units::second_t) 1.0)
-    {
-      m_robotFunction.SetBallStorageBelt(0.75);
-      m_robotFunction.SetShooterFeeder(1.0);
+    else{
+      m_robotFunction.SetBallStorageBelt(0.0);
+      m_robotFunction.SetShooterFeeder(0.0);
     }
   }
   else
   {
     m_robotFunction.SetShooter(0.0);
-    m_robotFunction.SetShooterFeeder(0.0);
 
     // Controls for the intake (button 8 is reverse)
     if(m_OpController.GetRawButton(8)) {
@@ -306,9 +306,10 @@ void Robot::DriveWithJoystick(bool fieldRelative)
       m_robotFunction.SetBallStorageBelt(0.0);
       m_robotFunction.SetShooterFeeder(0.0);
     }
-
   }
 
+ 
+  
   // Automatic intake lift movement
   if(m_OpController.GetRawButtonPressed(1))
     intakeDown = !intakeDown;

@@ -71,5 +71,8 @@ private:
 	char nmea_serial_buf[1000];
   int n_serial_bytes_read;
 
+  // Networktable entries
+  nt::NetworkTableEntry nte_shooterPower;
+
   void DriveWithJoystick(bool fieldRelative);
 };

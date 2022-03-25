@@ -14,7 +14,7 @@ RobotFunction::RobotFunction()
   auto nt_inst = nt::NetworkTableInstance::GetDefault();
   auto nt_table = nt_inst.GetTable("datatable");
   nte_intakeLiftEncoderValue = nt_table->GetEntry("Intake/Encoder");
-  nte_shooterAngleEncoderValue = nt_table->GetEntry("Shooter Angle/Encoder");
+  nte_shooterAngleEncoderValue = nt_table->GetEntry("Shooter/Angle Encoder");
   nte_colorSensorRed = nt_table->GetEntry("Color Sensor/Red");
   nte_colorSensorGreen = nt_table->GetEntry("Color Sensor/Green");
   nte_colorSensorBlue = nt_table->GetEntry("Color Sensor/Blue");
