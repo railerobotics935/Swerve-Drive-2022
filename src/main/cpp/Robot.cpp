@@ -79,6 +79,9 @@ void Robot::RobotInit()
   auto nt_inst = nt::NetworkTableInstance::GetDefault();
   auto nt_table = nt_inst.GetTable("datatable");
   nte_shooterPower = nt_table->GetEntry("Shooter/Power");
+
+  // Setting the camera light off
+  m_robotFunction.SetCameraLightOff();
 }
 
 void Robot::RobotPeriodic() {}
@@ -95,7 +98,6 @@ void Robot::AutonomousInit() {
 }
 
 void Robot::AutonomousPeriodic() {
-  firstTime = m_robotFunction.SetIntakeLift(intakeDown, firstTime);
 
   // Shoot ball
   if(autoTimer.Get() < (units::second_t) 3)
@@ -152,6 +154,7 @@ void Robot::TeleopInit()
   m_robotFunction.SetBallStorageBelt(0.0);
   m_robotFunction.SetShooterFeeder(0.0);
   m_robotFunction.SetShooter(0.0);
+  m_robotFunction.SetCameraLightOn();
 }
 
 void Robot::TeleopPeriodic()
@@ -225,6 +228,8 @@ void Robot::DisabledInit()
 {
   // brake to 0 speed and rotation
   m_drive.Drive((units::velocity::meters_per_second_t)0.0, (units::velocity::meters_per_second_t)0.0, (units::angular_velocity::radians_per_second_t)0.0, true);
+
+  m_robotFunction.SetCameraLightOff();
 }
 
 void Robot::DisabledPeriodic() {}
@@ -314,8 +319,6 @@ if(m_OpController.GetRawButton(4))
   if(m_OpController.GetRawButtonPressed(1))
     intakeDown = !intakeDown;
   
-  firstTime = m_robotFunction.SetIntakeLift(intakeDown, firstTime);
-
 
   // Control to reset the Tilt encoder
   if(m_OpController.GetRawButton(10))
