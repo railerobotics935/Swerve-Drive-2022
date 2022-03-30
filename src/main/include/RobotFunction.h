@@ -16,6 +16,7 @@
 #include <frc/DigitalInput.h>
 #include <frc/Servo.h>
 #include <frc/Relay.h>
+#include <frc/Solenoid.h>
 
 #include "ctre/phoenix.h"
 
@@ -25,7 +26,7 @@ class RobotFunction
 {
 public:
   RobotFunction();
-  void Init();
+  void ToggleIntakeSolinoid();
   void SetIntakeRoller(double power);
   void SetBallStorageBelt(double power);
   void SetShooterFeeder(double power);
@@ -41,6 +42,7 @@ public:
   void SetClimbMotorPower(double power);
   void SetCameraLightOn();
   void SetCameraLightOff();
+
 
 private:
   // Declaring Local variables
@@ -61,6 +63,9 @@ private:
   // Declaring spark max encoders
   rev::SparkMaxRelativeEncoder ballStorageEncoder{ballStorageBeltMotor.GetEncoder()};
   rev::SparkMaxRelativeEncoder shooterFeederEncoder{shooterFeederMotor.GetEncoder()};
+
+  // Pneumatics Solenoids
+  frc::Solenoid intakeSolenoid{frc::PneumaticsModuleType::CTREPCM, 0};
 
   // Color sensor
   static constexpr auto i2cPort = frc::I2C::Port::kOnboard;

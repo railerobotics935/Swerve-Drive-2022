@@ -89,6 +89,8 @@ void PixyStuffInit(string nt_table_name)
   nte_targetAngleOffset = nt_table->GetEntry("Target/Target Angle Offset");
   nte_validBlock = nt_table->GetEntry("Target/Valid Block");
   nte_targetDistance = nt_table->GetEntry("Target/Target Distance");
+
+  nte_targetDistance.SetDouble(0.0);
 }
 
 int PixyProcessData(int n_bytes_read, char uartbuffer[])
@@ -112,6 +114,7 @@ void targetDataHandler(bool valid_blocks, double target_angle_offset, int target
   nte_targetDistance.SetDouble(target_distance);
   nte_targetAngleOffset.SetDouble(target_angle_offset);
   nte_validBlock.SetBoolean(valid_blocks);
+  printf("finished the target data handler\r\n");
 }
 
 void CreateYawPID()

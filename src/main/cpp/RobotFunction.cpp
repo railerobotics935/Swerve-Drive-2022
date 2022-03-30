@@ -9,7 +9,6 @@
 
 RobotFunction::RobotFunction()
 {
-
   // Initialize shuffleboard communication
   auto nt_inst = nt::NetworkTableInstance::GetDefault();
   auto nt_table = nt_inst.GetTable("datatable");
@@ -25,21 +24,22 @@ RobotFunction::RobotFunction()
   shooterMotor1.SetInverted(false);
   shooterMotor2.SetInverted(ctre::phoenix::motorcontrol::InvertType::FollowMaster);
 
-
   // Config Motor controler
   intakeRollerMotor.ConfigFactoryDefault();
   shooterMotor1.ConfigFactoryDefault();
   shooterMotor2.ConfigFactoryDefault();
   shooterTiltMotor.ConfigFactoryDefault();
 
-  // Reset the encoder
+  // Reseting values
   shooterTiltEncoder.Reset();
-
   ClimbStopServo.SetAngle(0.0);
+  intakeSolenoid.Set(true);
 }
 
-void RobotFunction::Init()
+// Toggle between out and in for the intake air cylinder
+void RobotFunction::ToggleIntakeSolinoid()
 {
+  intakeSolenoid.Toggle();
 }
 // Set power for Intake Roller
 void RobotFunction::SetIntakeRoller(double power)

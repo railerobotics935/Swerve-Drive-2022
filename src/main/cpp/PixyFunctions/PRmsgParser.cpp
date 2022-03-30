@@ -5,7 +5,7 @@
 */
 
 #include "PixyFunctions/PRmsgParser.h"
-
+#include <iostream>
 #include <stdlib.h>
 #include <string.h>
 
@@ -98,7 +98,6 @@ void PRmsgParser::parseChar(char inChar)
 /****************************************************************************/
 {
 uint8_t i;
-
   // Parse NMEA sentences
   switch (inChar)
   {

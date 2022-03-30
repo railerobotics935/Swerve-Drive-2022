@@ -87,8 +87,6 @@ void Robot::RobotInit()
 void Robot::RobotPeriodic() {}
 
 void Robot::AutonomousInit() {
-  if(firstTime)
-    m_robotFunction.Init();
   
   // Reset timer
   autoTimer.Reset();
@@ -148,8 +146,6 @@ void Robot::TeleopInit()
   frc::Pose2d m_Pose{(units::meter_t)0.0, (units::meter_t)0.0, frc::Rotation2d((units::radian_t)0.0)};
   m_drive.ResetOdometry(m_Pose);
   CreateYawPID();
-  if(firstTime)
-    m_robotFunction.Init();
   
   m_robotFunction.SetBallStorageBelt(0.0);
   m_robotFunction.SetShooterFeeder(0.0);
@@ -313,12 +309,9 @@ if(m_OpController.GetRawButton(4))
     }
   }
 
- 
-  
   // Automatic intake lift movement
-  if(m_OpController.GetRawButtonPressed(1))
-    intakeDown = !intakeDown;
-  
+  if (m_OpController.GetRawButtonPressed(1))
+    m_robotFunction.ToggleIntakeSolinoid();
 
   // Control to reset the Tilt encoder
   if(m_OpController.GetRawButton(10))
