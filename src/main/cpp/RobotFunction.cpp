@@ -141,7 +141,7 @@ void RobotFunction::SafetyShooterStop()
   // Saftey stops for shooter
   if(shooterTiltMotor.Get() > 0.0 && tiltSwitch.Get())
     shooterTiltMotor.Set(0.0);
-  if(shooterTiltMotor.Get() < 0.0 && shooterTiltEncoder.Get() > 600)
+  if(shooterTiltMotor.Get() < 0.0 && shooterTiltEncoder.Get() > 700)
     shooterTiltMotor.Set(0.0);
 }
 

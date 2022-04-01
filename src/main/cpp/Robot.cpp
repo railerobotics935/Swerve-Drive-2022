@@ -18,7 +18,6 @@
 #include "PixyFunctions/PixyStuff.h"
 #include "Robot.h"
 
-
 //#define ALAN_CONTROL
 #ifdef  ALAN_CONTROL
 #define AXIS1_X 2
@@ -30,8 +29,6 @@
 #define AXIS2_X 2
 #endif
 
-
-
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 // DEFINE AUTOS - position is based on the persepcive of the drive
@@ -41,8 +38,6 @@
 //#define LEFT_AUTO
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
-
-
 
 // Safty stop for right auto
 #ifdef RIGHT_AUTO
@@ -261,18 +256,7 @@ void Robot::DriveWithJoystick(bool fieldRelative)
 
   m_field.SetRobotPose(m_drive.GetPose());
 
-  // Reseting shooter Timers
-  if(m_OpController.GetRawButtonPressed(4))
-  {
-    shooterTimer.Reset();
-    shooterTimer.Start();
-  }
-  if(m_OpController.GetRawButtonPressed(3))
-  {
-    lowerShooterTimer.Reset();
-    lowerShooterTimer.Start();
-  }
-
+// Shooter controles
 if(m_OpController.GetRawButton(4))
   {
     // upper hub shooter

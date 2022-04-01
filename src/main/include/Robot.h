@@ -64,7 +64,6 @@ private:
   // Declare timers
   frc::Timer shooterTimer{};
   frc::Timer autoTimer{};
-  frc::Timer lowerShooterTimer{};
 
   // create a MXP serial Port and serial data buffer
   frc::SerialPort mxp_serial_port{115200, frc::SerialPort::kMXP, 8, frc::SerialPort::kParity_None, frc::SerialPort::kStopBits_One};
