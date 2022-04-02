@@ -32,6 +32,7 @@ public:
   static constexpr units::meters_per_second_t kMaxAutoSpeed = 1.0_mps;  // 1 meters per second
   static constexpr units::radians_per_second_t kMaxAutoRotation{1 * wpi::numbers::pi};  // 1/2 rotations per second
   static constexpr units::radians_per_second_t kFindBallRotation{0.25 * wpi::numbers::pi};  // 1/8 rotations per second
+  static constexpr units::radians_per_second_t kTargetingRotation{0.125 * wpi::numbers::pi};  // 1/16 rotations per second
 
 private:
   enum LocateAndLoadBallStep {kFindBall, kChaseBall, kLoadBall, kBallLoaded};

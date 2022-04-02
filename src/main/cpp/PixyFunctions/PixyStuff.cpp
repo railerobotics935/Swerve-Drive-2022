@@ -28,7 +28,7 @@ PIXY_BLOCK_TYPE read_blocks[MAX_NR_OF_BLOCKS];
 // Create an instance of the Serial data parser
 PRmsgParser myPRmsgParser;
 
-double currentTargetAngleOffset;
+double targetAngleOffset;
 double targetShooterAngle;
 double targetShooterPower;
 
@@ -63,7 +63,7 @@ void PixyStuffInit(string nt_table_name)
   // set default values
   nte_targetDistance.SetDouble(0.0);
 
-  currentTargetAngleOffset = 0.0;
+  targetAngleOffset = 0.0;
   targetShooterAngle = 350;
   targetShooterPower = 0.7;
 }
@@ -85,11 +85,11 @@ int PixyProcessData(int n_bytes_read, char uartbuffer[])
 
 void targetDataHandler(bool valid_blocks, double target_angle_offset, int target_distance)
 {
-  // set values used for PID targeting
-  currentTargetAngleOffset = target_angle_offset;
-
-  if(valid_blocks)
+  if (valid_blocks)
   {
+    // set values used for PID targeting
+    targetAngleOffset = target_angle_offset;
+
     // Origonal equaiton y = 1.2547x + 77.083
     targetShooterAngle = (1.2547 * target_distance) + 77.083;
 
@@ -101,6 +101,8 @@ void targetDataHandler(bool valid_blocks, double target_angle_offset, int target
   }
   else
   {
+    // set values used for PID targeting
+    targetAngleOffset = -0.08;
     targetShooterAngle = 350;
     targetShooterPower = 0.7;
   }

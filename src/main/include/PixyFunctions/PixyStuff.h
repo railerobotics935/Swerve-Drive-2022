@@ -17,7 +17,7 @@
 
 using namespace std;
 
-extern double currentTargetAngleOffset;
+extern double targetAngleOffset;
 extern double targetShooterAngle;
 extern double targetShooterPower;
 

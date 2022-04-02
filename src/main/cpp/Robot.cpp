@@ -58,6 +58,8 @@
 #endif
 //#define PRINT_BLOCK_DATA
 
+#define TARGET_ANGLE_DEADBAND 0.02
+
 void Robot::RobotInit()
 {
   m_fieldRelative = false;
@@ -259,13 +261,11 @@ void Robot::DriveWithJoystick(bool fieldRelative)
                 Drivetrain::kMaxAngularSpeed;
 
 //  printf("JS x,y,r: %.1f, %.1f, %.2f\n\r", xSpeed, ySpeed, rot);
-
   m_drive.Drive(xSpeed, ySpeed, rot, fieldRelative);
-
   m_field.SetRobotPose(m_drive.GetPose());
 
-// Shooter controles
-if(m_OpController.GetRawButton(4))
+  // Shooter controles
+  if (m_OpController.GetRawButton(4))
   {
     // Automatic Shooting
     // Set shooter angle
@@ -274,7 +274,27 @@ if(m_OpController.GetRawButton(4))
     // upper hub shooter
     shooterPower = targetShooterPower;
     m_robotFunction.SetShooter(shooterPower);
-     if(m_OpController.GetRawButton(3))
+
+    // Align robot with target: center is reported as -0.080 radians
+    // when the robot is to the right of the target the angle increases (+)
+    // when the robot is to the left of the target the angle decreases (-)
+    if (targetAngleOffset > (-0.080 + TARGET_ANGLE_DEADBAND))
+    {
+      // Rotate robot Left
+      m_drive.Drive((units::velocity::meters_per_second_t)0.0, (units::velocity::meters_per_second_t)0.0, AutomatedFunctions::kTargetingRotation, false);
+    }
+    else if (targetAngleOffset < (-0.080 - TARGET_ANGLE_DEADBAND))
+    {
+      // Rotate robot Right
+      m_drive.Drive((units::velocity::meters_per_second_t)0.0, (units::velocity::meters_per_second_t)0.0, -AutomatedFunctions::kTargetingRotation, false);
+    }
+    else
+    {
+      // The robot is aligned with the target
+      m_drive.Drive((units::velocity::meters_per_second_t)0.0, (units::velocity::meters_per_second_t)0.0, (units::angular_velocity::radians_per_second_t)0.0, true);
+    }
+
+    if(m_OpController.GetRawButton(3))
     {
       m_robotFunction.SetBallStorageBelt(0.75);
       m_robotFunction.SetShooterFeeder(1.0);
