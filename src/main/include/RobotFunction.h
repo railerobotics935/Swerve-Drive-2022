@@ -26,7 +26,8 @@ class RobotFunction
 {
 public:
   RobotFunction();
-  void ToggleIntakeSolinoid();
+  void SetIntakeUp();
+  void SetIntakeDown();
   void SetIntakeRoller(double power);
   void SetBallStorageBelt(double power);
   void SetShooterFeeder(double power);

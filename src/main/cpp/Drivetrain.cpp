@@ -88,6 +88,19 @@ void Drivetrain::Drive(units::meters_per_second_t xSpeed, units::meters_per_seco
   nte_robot_y.SetDouble((double)m_odometry.GetPose().Y());
 }
 
+void Drivetrain::FaceTarget()
+{
+  rotPower = m_yawPID.Calculate((double)GetPose().Rotation().Radians());
+
+  Drive(units::meters_per_second_t(0),units::meters_per_second_t(0), units::radians_per_second_t(rotPower), true);
+}
+
+void Drivetrain::SetAnglePIDValues(double Kp, double Ki, double Kd, double offsetRadians)
+{
+  m_yawPID.SetPID(Kp, Ki, Kd);
+  yawSetpoint = (double)GetPose().Rotation().Radians() + offsetRadians;
+  m_yawPID.SetSetpoint(yawSetpoint);
+}
 const frc::Pose2d& Drivetrain::GetPose()
 {
   return m_odometry.GetPose();

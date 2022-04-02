@@ -73,13 +73,36 @@ void Robot::RobotInit()
   // Initialize shuffleboard communications
   auto nt_inst = nt::NetworkTableInstance::GetDefault();
   auto nt_table = nt_inst.GetTable("datatable");
-  nte_shooterPower = nt_table->GetEntry("Shooter/Power");
+  nte_shooterPower = nt_table->GetEntry("Shooter/Input Power");
+
+  nte_shooterPower.SetDouble(0.7);
 
   // Setting the camera light off
   m_robotFunction.SetCameraLightOff();
+
+  // Default intake up
+  m_robotFunction.SetIntakeUp();
 }
 
-void Robot::RobotPeriodic() {}
+void Robot::RobotPeriodic() 
+{
+  //------------------------------------------------------------
+  // PIXY STUFF
+  //------------------------------------------------------------
+
+  // Get Teensy/Pixy information from RoboRIO expansion port
+  n_serial_bytes_read = 0;
+  n_serial_bytes_read = mxp_serial_port.Read(nmea_serial_buf, 1000);
+  PixyProcessData(n_serial_bytes_read, nmea_serial_buf);
+#ifdef PRINT_BLOCK_DATA		
+  if (n_serial_bytes_read > 0)
+  {
+    nmea_serial_buf[n_serial_bytes_read] = 0;
+    printf("Chassis data: %s\n", nmea_serial_buf);
+  }
+#endif
+
+}
 
 void Robot::AutonomousInit() {
   
@@ -133,14 +156,11 @@ void Robot::AutonomousPeriodic() {
 #endif
 }
 
-
 void Robot::TeleopInit()
 {
-  nte_shooterPower.SetDouble(8.0);
   // Resetting Pose2d and the odometry
   frc::Pose2d m_Pose{(units::meter_t)0.0, (units::meter_t)0.0, frc::Rotation2d((units::radian_t)0.0)};
   m_drive.ResetOdometry(m_Pose);
-  CreateYawPID();
   
   m_robotFunction.SetBallStorageBelt(0.0);
   m_robotFunction.SetShooterFeeder(0.0);
@@ -198,21 +218,6 @@ void Robot::TeleopPeriodic()
   // Update nte
   m_robotFunction.UpdateNTE();
 
-  //------------------------------------------------------------
-  // PIXY STUFF
-  //------------------------------------------------------------
-
-  // Get Teensy/Pixy information from RoboRIO expansion port
-  n_serial_bytes_read = 0;
-  n_serial_bytes_read = mxp_serial_port.Read(nmea_serial_buf, 1000);
-  PixyProcessData(n_serial_bytes_read, nmea_serial_buf);
-#ifdef PRINT_BLOCK_DATA		
-  if (n_serial_bytes_read > 0)
-  {
-    nmea_serial_buf[n_serial_bytes_read] = 0;
-    printf("Chassis data: %s\n", nmea_serial_buf);
-  }
-#endif
 }
 
 void Robot::DisabledInit()
@@ -221,6 +226,9 @@ void Robot::DisabledInit()
   m_drive.Drive((units::velocity::meters_per_second_t)0.0, (units::velocity::meters_per_second_t)0.0, (units::angular_velocity::radians_per_second_t)0.0, true);
 
   m_robotFunction.SetCameraLightOff();
+
+  // Default intake up
+  m_robotFunction.SetIntakeUp();
 }
 
 void Robot::DisabledPeriodic() {}
@@ -259,49 +267,61 @@ void Robot::DriveWithJoystick(bool fieldRelative)
 // Shooter controles
 if(m_OpController.GetRawButton(4))
   {
+    // Automatic Shooting
+    // Set shooter angle
+    m_robotFunction.SetShooterTiltPos(targetShooterAngle);
+
     // upper hub shooter
-    shooterPower = nte_shooterPower.GetDouble(0.8);
-    m_robotFunction.SetShooter(nte_shooterPower.GetDouble(0.8));
+    shooterPower = targetShooterPower;
+    m_robotFunction.SetShooter(shooterPower);
      if(m_OpController.GetRawButton(3))
     {
       m_robotFunction.SetBallStorageBelt(0.75);
       m_robotFunction.SetShooterFeeder(1.0);
     }
-    else{
+    else
+    {
       m_robotFunction.SetBallStorageBelt(0.0);
       m_robotFunction.SetShooterFeeder(0.0);
     }
   }
   else
   {
+    // everything we do if we aren't shooting
     m_robotFunction.SetShooter(0.0);
 
     // Controls for the intake (button 8 is reverse)
-    if(m_OpController.GetRawButton(8)) {
+    if(m_OpController.GetRawButton(8)) 
+    {
       m_robotFunction.SetIntakeRoller(-1.0);
       m_robotFunction.SetBallStorageBelt(-0.75);
       m_robotFunction.SetShooterFeeder(-1.0);
     }
-    else if(m_OpController.GetRawButton(7)) {
+    else if(m_OpController.GetRawButton(7)) 
+    {
       m_robotFunction.SetIntakeRoller(1.0);
       m_robotFunction.SetBallStorageBelt(0.75);
     }
-    else {
+    else 
+    {
       m_robotFunction.SetIntakeRoller(0.0);
       m_robotFunction.SetBallStorageBelt(0.0);
       m_robotFunction.SetShooterFeeder(0.0);
     }
+
+    // Control to reset the Tilt encoder
+    if(m_OpController.GetRawButton(10))
+      m_robotFunction.ResetTiltEncoder();
+    else
+      m_robotFunction.SetShooterTiltMotor(frc::ApplyDeadband(m_OpController.GetRawAxis(1)*0.5, 0.08)); 
   }
 
   // Automatic intake lift movement
   if (m_OpController.GetRawButtonPressed(1))
-    m_robotFunction.ToggleIntakeSolinoid();
-
-  // Control to reset the Tilt encoder
-  if(m_OpController.GetRawButton(10))
-    m_robotFunction.ResetTiltEncoder();
-  else
-    m_robotFunction.SetShooterTiltMotor(frc::ApplyDeadband(m_OpController.GetRawAxis(1)*0.5, 0.08)); 
+    m_robotFunction.SetIntakeDown();
+  
+  if( m_OpController.GetRawButtonReleased(1))
+    m_robotFunction.SetIntakeUp();
 
   // climb button
   if(m_driveController.GetRawButton(10))
@@ -312,6 +332,7 @@ if(m_OpController.GetRawButton(4))
   // Seting tilt to pos
   if(m_OpController.GetRawButton(5))
     m_robotFunction.SetShooterTiltPos(300);
+
   if(m_OpController.GetRawButton(6))
     m_robotFunction.SetShooterTiltPos(400);
 

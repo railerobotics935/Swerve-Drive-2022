@@ -33,13 +33,18 @@ RobotFunction::RobotFunction()
   // Reseting values
   shooterTiltEncoder.Reset();
   ClimbStopServo.SetAngle(0.0);
-  intakeSolenoid.Set(true);
+  intakeSolenoid.Set(false);
 }
 
 // Toggle between out and in for the intake air cylinder
-void RobotFunction::ToggleIntakeSolinoid()
+void RobotFunction::SetIntakeUp()
 {
-  intakeSolenoid.Toggle();
+  intakeSolenoid.Set(false);
+}
+
+void RobotFunction::SetIntakeDown()
+{
+  intakeSolenoid.Set(true);
 }
 // Set power for Intake Roller
 void RobotFunction::SetIntakeRoller(double power)
@@ -132,7 +137,7 @@ void RobotFunction::ResetTiltEncoder()
     shooterTiltMotor.Set(0.0);
   }
   else
-    shooterTiltMotor.Set(1.0);
+    shooterTiltMotor.Set(0.5);
 }
 
 // NOTE: Positive Power makes the shooter go tward the limit switch

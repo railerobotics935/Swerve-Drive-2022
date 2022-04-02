@@ -15,6 +15,7 @@
 #include <frc/shuffleboard/ShuffleboardTab.h>
 #include <networktables/NetworkTableEntry.h>
 #include <networktables/NetworkTableInstance.h>
+#include <frc/controller/PIDController.h>
 
 #include "SwerveModule.h"
 
@@ -30,6 +31,9 @@ public:
   void ResetGyro();
   void Drive(units::meters_per_second_t xSpeed, units::meters_per_second_t ySpeed,
               units::radians_per_second_t rot, bool fieldRelative);
+  void FaceTarget();
+  void SetAnglePIDValues(double Kp, double Ki, double Kd, double offsetRadians);
+
   const frc::Pose2d& GetPose();
 
   static constexpr units::meters_per_second_t kMaxSpeed = 4.0_mps;  // 4 meters per second
@@ -73,6 +77,14 @@ private:
 
   frc::ADIS16470_IMU m_gyro;
 
+  // PID controller for changing robot rotation and other variables
+  double rotPower;
+  double yawSetpoint;
+  double yawKp = 1.0;
+  double yawKi = 0.0;
+  double yawKd = 0.0;
+  frc::PIDController m_yawPID{yawKp, yawKi, yawKd};
+  
   frc::SwerveDriveKinematics<4> m_kinematics{m_frontLeftLocation, m_frontRightLocation, m_backLeftLocation, m_backRightLocation};
   frc::SwerveDriveOdometry<4> m_odometry{m_kinematics, m_gyro.GetAngle()};
 };

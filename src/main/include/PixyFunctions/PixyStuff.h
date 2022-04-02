@@ -17,12 +17,11 @@
 
 using namespace std;
 
+extern double currentTargetAngleOffset;
+extern double targetShooterAngle;
+extern double targetShooterPower;
 
-void SetBallColorIndex(int ballColorIndex);
 void PixyStuffInit(string nt_table_name);
 int PixyProcessData(int n_bytes_read, char uartbuffer[]);
-void BallSpeed();
-void CenterRobot(Drivetrain &m_drive);
-void CreateYawPID();
 
 #endif // PIXY_STUFF_H_
