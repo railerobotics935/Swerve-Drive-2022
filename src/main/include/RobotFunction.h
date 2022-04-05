@@ -28,7 +28,7 @@ public:
   RobotFunction();
   void SetIntakeUp();
   void SetIntakeDown();
-  void SetIntakeRoller(double power);
+  void SetIntakeMotorPower(double power);
   void SetBallStorageBelt(double power);
   void SetShooterFeeder(double power);
   void SetShooter(double power);
@@ -53,10 +53,10 @@ private:
   double encoderStartingConfig = 0.0;
 
   // Declaring Motorcontrolers
-  WPI_VictorSPX intakeRollerMotor{8};
   rev::CANSparkMax ballStorageBeltMotor{11, rev::CANSparkMax::MotorType::kBrushless};
   rev::CANSparkMax shooterFeederMotor{12, rev::CANSparkMax::MotorType::kBrushless};
   rev::CANSparkMax climbMotor{17, rev::CANSparkMax::MotorType::kBrushless};
+  rev::CANSparkMax intakeMotor{8, rev::CANSparkMax::MotorType::kBrushless};
   WPI_VictorSPX shooterMotor1{15};
   WPI_VictorSPX shooterMotor2{16};
   WPI_VictorSPX shooterTiltMotor{13};

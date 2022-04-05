@@ -58,7 +58,7 @@
 #endif
 //#define PRINT_BLOCK_DATA
 
-#define TARGET_ANGLE_DEADBAND 0.02
+#define TARGET_ANGLE_DEADBAND 0.03
 
 void Robot::RobotInit()
 {
@@ -138,12 +138,10 @@ void Robot::AutonomousPeriodic() {
   if(autoTimer.Get() > (units::second_t) 3.0 && autoTimer.Get() < (units::second_t) 6.0)
   {
     m_drive.Drive((units::velocity::meters_per_second_t) 0.8, (units::velocity::meters_per_second_t)0.0, (units::angular_velocity::radians_per_second_t)0.0, m_fieldRelative);
-    m_robotFunction.SetIntakeRoller(0.0);
   }
   else
   {
     m_drive.Drive((units::velocity::meters_per_second_t)0.0, (units::velocity::meters_per_second_t)0.0, (units::angular_velocity::radians_per_second_t)0.0, true);
-    m_robotFunction.SetIntakeRoller(0.0);
   }
   //TODO: Find out direction to go for each pos, and write code to go out of area, and maybe even pick up a ball. 
   // AUTO MOVEMENT
@@ -309,25 +307,44 @@ void Robot::DriveWithJoystick(bool fieldRelative)
   {
     // everything we do if we aren't shooting
     m_robotFunction.SetShooter(0.0);
+    m_robotFunction.SetShooterFeeder(0.0);
 
-    // Controls for the intake (button 8 is reverse)
-    if(m_OpController.GetRawButton(8)) 
+    if ((double)intakeTimer.Get() > 0.5)
     {
-      m_robotFunction.SetIntakeRoller(-1.0);
+      m_robotFunction.SetIntakeMotorPower(0.0);
+      m_robotFunction.SetBallStorageBelt(0.0);
+    }
+
+    // Automatic intake lift movement
+        // Automatic intake lift movement
+    if (m_OpController.GetRawButton(8))
+    {
+      m_robotFunction.SetIntakeDown();
+      m_robotFunction.SetIntakeMotorPower(-0.7);
       m_robotFunction.SetBallStorageBelt(-0.75);
       m_robotFunction.SetShooterFeeder(-1.0);
     }
-    else if(m_OpController.GetRawButton(7)) 
+    if( m_OpController.GetRawButtonReleased(8))
     {
-      m_robotFunction.SetIntakeRoller(1.0);
-      m_robotFunction.SetBallStorageBelt(0.75);
-    }
-    else 
-    {
-      m_robotFunction.SetIntakeRoller(0.0);
+      m_robotFunction.SetIntakeUp();
+      m_robotFunction.SetIntakeMotorPower(0.0);
       m_robotFunction.SetBallStorageBelt(0.0);
       m_robotFunction.SetShooterFeeder(0.0);
     }
+
+    if (m_OpController.GetRawButton(7))
+    {
+      m_robotFunction.SetIntakeDown();
+      m_robotFunction.SetIntakeMotorPower(0.7);
+      m_robotFunction.SetBallStorageBelt(0.75);
+    }
+    if( m_OpController.GetRawButtonReleased(7))
+    {
+      m_robotFunction.SetIntakeUp();
+      intakeTimer.Reset();
+      intakeTimer.Start();
+    }
+
 
     // Control to reset the Tilt encoder
     if(m_OpController.GetRawButton(10))
@@ -335,13 +352,6 @@ void Robot::DriveWithJoystick(bool fieldRelative)
     else
       m_robotFunction.SetShooterTiltMotor(frc::ApplyDeadband(m_OpController.GetRawAxis(1)*0.5, 0.08)); 
   }
-
-  // Automatic intake lift movement
-  if (m_OpController.GetRawButtonPressed(1))
-    m_robotFunction.SetIntakeDown();
-  
-  if( m_OpController.GetRawButtonReleased(1))
-    m_robotFunction.SetIntakeUp();
 
   // climb button
   if(m_driveController.GetRawButton(10))

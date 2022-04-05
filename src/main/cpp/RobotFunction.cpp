@@ -25,7 +25,6 @@ RobotFunction::RobotFunction()
   shooterMotor2.SetInverted(ctre::phoenix::motorcontrol::InvertType::FollowMaster);
 
   // Config Motor controler
-  intakeRollerMotor.ConfigFactoryDefault();
   shooterMotor1.ConfigFactoryDefault();
   shooterMotor2.ConfigFactoryDefault();
   shooterTiltMotor.ConfigFactoryDefault();
@@ -34,6 +33,8 @@ RobotFunction::RobotFunction()
   shooterTiltEncoder.Reset();
   ClimbStopServo.SetAngle(0.0);
   intakeSolenoid.Set(false);
+  intakeMotor.SetInverted(true);
+  
 }
 
 // Toggle between out and in for the intake air cylinder
@@ -46,10 +47,11 @@ void RobotFunction::SetIntakeDown()
 {
   intakeSolenoid.Set(true);
 }
-// Set power for Intake Roller
-void RobotFunction::SetIntakeRoller(double power)
+
+// Set the Intake motor power
+void RobotFunction::SetIntakeMotorPower(double power)
 {
-  intakeRollerMotor.Set(power);
+  intakeMotor.Set(power);
 }
 
 // Set power for ball storage belt
