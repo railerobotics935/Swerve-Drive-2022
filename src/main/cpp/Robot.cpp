@@ -123,7 +123,7 @@ void Robot::AutonomousPeriodic() {
   {
   case AutoStates::kMoveBack:
     m_drive.Drive((units::velocity::meters_per_second_t) 0.8, (units::velocity::meters_per_second_t)0.0, (units::angular_velocity::radians_per_second_t)0.0, false);
-    if(m_drive.GetPose().X() >= (units::length::meter_t)3.0)
+    if(m_drive.GetPose().X() >= (units::length::meter_t)0.7 )
     {
       m_drive.Drive((units::velocity::meters_per_second_t)0.0, (units::velocity::meters_per_second_t)0.0, (units::angular_velocity::radians_per_second_t)0.0, false);
       currentState = AutoStates::kShootBall;

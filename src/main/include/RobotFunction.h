@@ -79,10 +79,10 @@ private:
   frc::DigitalInput tiltSwitch{4};
 
   // Climber servo
-  frc::Servo ClimbStopServo{0};
+  frc::Servo ClimbStopServo{9};
 
   // Spike for pixy light
-  frc::Relay lightSpike{1, frc::Relay::Direction::kForwardOnly};
+  frc::Relay lightSpike{0, frc::Relay::Direction::kForwardOnly};
 
   // Declaring Network Table Entrys
   nt::NetworkTableEntry nte_shooterAngleEncoderValue;
