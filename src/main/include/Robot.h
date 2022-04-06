@@ -35,6 +35,9 @@ public:
   void SimulationPeriodic() override;
 
 private:
+  enum AutoStates {kMoveBack, kShootBall, kFindBall};
+  AutoStates currentState;
+
   frc::XboxController m_driveController{0};
   frc::XboxController m_OpController{1};
   Drivetrain m_drive;

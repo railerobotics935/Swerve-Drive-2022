@@ -111,49 +111,86 @@ void Robot::AutonomousInit() {
   // Reset timer
   autoTimer.Reset();
   autoTimer.Start();
-  shooterTimer.Reset();
-  shooterTimer.Start();
+
+  m_drive.ResetOdometry(m_drive.GetPose());
+  currentState = AutoStates::kMoveBack;
 }
 
 void Robot::AutonomousPeriodic() {
 
-  // Shoot ball
-  if(autoTimer.Get() < (units::second_t) 3)
+  // Drive Backward
+  switch (currentState)
   {
-    m_robotFunction.SetShooterTiltPos(390);
-    m_robotFunction.SetShooter(1.0);
-    if(shooterTimer.Get() > (units::second_t) 1.5)
+  case AutoStates::kMoveBack:
+    m_drive.Drive((units::velocity::meters_per_second_t) 0.8, (units::velocity::meters_per_second_t)0.0, (units::angular_velocity::radians_per_second_t)0.0, false);
+    if(m_drive.GetPose().X() >= (units::length::meter_t)3.0)
+    {
+      m_drive.Drive((units::velocity::meters_per_second_t)0.0, (units::velocity::meters_per_second_t)0.0, (units::angular_velocity::radians_per_second_t)0.0, false);
+      currentState = AutoStates::kShootBall;
+      shooterTimer.Reset();
+      shooterTimer.Start();
+    }
+    break;
+  
+  case AutoStates::kShootBall:
+    // Automatic Shooting
+    // Set shooter angle
+    m_robotFunction.SetShooterTiltPos(targetShooterAngle);
+
+    // upper hub shooter
+    shooterPower = targetShooterPower;
+    m_robotFunction.SetShooter(shooterPower);
+
+    // Align robot with target: center is reported as -0.080 radians
+    // when the robot is to the right of the target the angle increases (+)
+    // when the robot is to the left of the target the angle decreases (-)
+    if (targetAngleOffset > (-0.080 + TARGET_ANGLE_DEADBAND))
+    {
+      // Rotate robot Left
+      m_drive.Drive((units::velocity::meters_per_second_t)0.0, (units::velocity::meters_per_second_t)0.0, AutomatedFunctions::kTargetingRotation, false);
+    }
+    else if (targetAngleOffset < (-0.080 - TARGET_ANGLE_DEADBAND))
+    {
+      // Rotate robot Right
+      m_drive.Drive((units::velocity::meters_per_second_t)0.0, (units::velocity::meters_per_second_t)0.0, -AutomatedFunctions::kTargetingRotation, false);
+    }
+    else
+    {
+      // The robot is aligned with the target
+      m_drive.Drive((units::velocity::meters_per_second_t)0.0, (units::velocity::meters_per_second_t)0.0, (units::angular_velocity::radians_per_second_t)0.0, true);
+    }
+
+    if(shooterTimer.Get() > (units::time::second_t)2.0)
     {
       m_robotFunction.SetBallStorageBelt(0.75);
       m_robotFunction.SetShooterFeeder(1.0);
     }
-  }
-  else
-  {
-    m_robotFunction.SetShooter(0.0);
-    m_robotFunction.SetBallStorageBelt(0.0);
-    m_robotFunction.SetShooterFeeder(0.0);
-  }
 
-  if(autoTimer.Get() > (units::second_t) 3.0 && autoTimer.Get() < (units::second_t) 6.0)
-  {
-    m_drive.Drive((units::velocity::meters_per_second_t) 0.8, (units::velocity::meters_per_second_t)0.0, (units::angular_velocity::radians_per_second_t)0.0, m_fieldRelative);
+    if(shooterTimer.Get() > (units::time::second_t)4.0)
+    {
+      m_robotFunction.SetShooter(0.0);
+      m_robotFunction.SetBallStorageBelt(0.0);
+      m_robotFunction.SetShooterFeeder(0.0);
+      m_Tricks.LocateAndLoadBall(m_drive, m_robotFunction, "none", AutomatedFunctions::FunctionCmd::kStartFunction);
+      currentState = AutoStates::kFindBall;
+    }   
+    break;
+
+  case AutoStates::kFindBall:
+
+    if (frc::DriverStation::GetAlliance	() == frc::DriverStation::Alliance::kRed){
+      if(m_Tricks.LocateAndLoadBall(m_drive, m_robotFunction, "red ball", AutomatedFunctions::FunctionCmd::kRunFunction))
+        currentState = AutoStates::kShootBall;
+    }
+    else if (frc::DriverStation::GetAlliance	() == frc::DriverStation::Alliance::kBlue){
+      if(m_Tricks.LocateAndLoadBall(m_drive, m_robotFunction, "blue ball", AutomatedFunctions::FunctionCmd::kRunFunction))
+        currentState = AutoStates::kShootBall;
+    }
+    else
+      std::cout << "Please specify the Alliance\n\r";
+
+    break;  
   }
-  else
-  {
-    m_drive.Drive((units::velocity::meters_per_second_t)0.0, (units::velocity::meters_per_second_t)0.0, (units::angular_velocity::radians_per_second_t)0.0, true);
-  }
-  //TODO: Find out direction to go for each pos, and write code to go out of area, and maybe even pick up a ball. 
-  // AUTO MOVEMENT
-#ifdef RIGHT_AUTO
-
-#endif
-#ifdef CENTER_AUTO
-
-#endif
-#ifdef LEFT_AUTO
-
-#endif
 }
 
 void Robot::TeleopInit()

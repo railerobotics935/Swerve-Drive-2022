@@ -27,7 +27,7 @@ public:
   AutomatedFunctions();
 
   void DriveClockWiseSemiCircleAroundIntake(Drivetrain &m_drive);
-  void LocateAndLoadBall(Drivetrain &m_drive, RobotFunction &m_robotFunciton, std::string object_class, FunctionCmd command);
+  bool LocateAndLoadBall(Drivetrain &m_drive, RobotFunction &m_robotFunciton, std::string object_class, FunctionCmd command);
 
   static constexpr units::meters_per_second_t kMaxAutoSpeed = 1.0_mps;  // 1 meters per second
   static constexpr units::radians_per_second_t kMaxAutoRotation{1 * wpi::numbers::pi};  // 1/2 rotations per second
@@ -65,5 +65,5 @@ private:
 
   void FindBall(Drivetrain &m_drive, std::string object_class);
   void ChaseBall(Drivetrain &m_drive, std::string object_class);
-  void LoadBall(Drivetrain &m_drive, RobotFunction &m_robotFunciton, std::string object_class);
+  bool LoadBall(Drivetrain &m_drive, RobotFunction &m_robotFunciton, std::string object_class);
 };

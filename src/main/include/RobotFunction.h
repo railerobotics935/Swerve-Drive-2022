@@ -44,7 +44,6 @@ public:
   void SetCameraLightOn();
   void SetCameraLightOff();
 
-
 private:
   // Declaring Local variables
   frc::Color detectedColor;
