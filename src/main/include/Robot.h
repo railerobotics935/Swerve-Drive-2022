@@ -35,8 +35,10 @@ public:
   void SimulationPeriodic() override;
 
 private:
-  enum AutoStates {kMoveBack, kShootBall, kFindBall};
+  enum AutoStates {kMoveBack, kShootBall, kRotateForSecondBall, kLoadSecondBall, kRotateBackFromSecondBall,
+                   kFindSecondBall, kShootSecondBall, kFindThirdBall, kAutonomousFinished};
   AutoStates currentState;
+  AutomatedFunctions::AllianceColor allianceColor;
 
   frc::XboxController m_driveController{0};
   frc::XboxController m_OpController{1};
@@ -45,7 +47,8 @@ private:
   AutomatedFunctions m_Tricks;
   bool m_fieldRelative;
 
-  double shooterPower = 0.0;
+//  double shooterPower = 0.0;
+  uint8_t ball_shoot_count = 0;
 
   bool intakeDown = false;
   bool firstTime = true;
@@ -68,6 +71,7 @@ private:
   frc::Timer shooterTimer{};
   frc::Timer autoTimer{};
   frc::Timer intakeTimer{};
+  frc::Timer debugTimer{};
 
   // create a MXP serial Port and serial data buffer
   frc::SerialPort mxp_serial_port{115200, frc::SerialPort::kMXP, 8, frc::SerialPort::kParity_None, frc::SerialPort::kStopBits_One};

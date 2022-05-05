@@ -59,7 +59,6 @@ void PixyStuffInit(string nt_table_name)
   nte_targetShooterAngle = nt_table->GetEntry("Shooter/Target Angle");
   nte_targetShooterPower = nt_table->GetEntry("Shooter/Target Power");
 
-
   // set default values
   nte_targetDistance.SetDouble(0.0);
 
@@ -101,7 +100,7 @@ void targetDataHandler(bool valid_blocks, double target_angle_offset, int target
   }
   else
   {
-    // set values used for PID targeting
+    // set default values used for PID targeting
     targetAngleOffset = -0.08;
     targetShooterAngle = 350;
     targetShooterPower = 0.7;

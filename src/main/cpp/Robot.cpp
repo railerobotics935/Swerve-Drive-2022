@@ -29,8 +29,14 @@
 #define AXIS2_X 2
 #endif
 
+// first ball shooter power reduction
+#define FIRST_BALL_SHOOTER_POWER_REDUCTION 0.89
+
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
+// comment out for 2 Ball autonomous:
+#define AUTONOMOUS_3_BALL
+
 // DEFINE AUTOS - position is based on the persepcive of the drive
 
 #define RIGHT_AUTO
@@ -58,7 +64,9 @@
 #endif
 //#define PRINT_BLOCK_DATA
 
-#define TARGET_ANGLE_DEADBAND 0.03
+// Target center is reported by Teensy as -0.080 radians
+#define TARGET_ANGLE_OFFSET -0.02
+#define TARGET_ANGLE_DEADBAND 0.04
 
 void Robot::RobotInit()
 {
@@ -80,7 +88,7 @@ void Robot::RobotInit()
   nte_shooterPower.SetDouble(0.7);
 
   // Setting the camera light off
-  m_robotFunction.SetCameraLightOff();
+  m_robotFunction.SetCameraLightOn();
 
   // Default intake up
   m_robotFunction.SetIntakeUp();
@@ -103,93 +111,205 @@ void Robot::RobotPeriodic()
     printf("Chassis data: %s\n", nmea_serial_buf);
   }
 #endif
-
 }
 
-void Robot::AutonomousInit() {
-  
+void Robot::AutonomousInit()
+{
   // Reset timer
   autoTimer.Reset();
   autoTimer.Start();
+  debugTimer.Reset();
+  debugTimer.Start();
 
+  // Get Alliance Color
+  if (frc::DriverStation::GetAlliance	() == frc::DriverStation::Alliance::kRed)
+    allianceColor = AutomatedFunctions::AllianceColor::kRed;
+  else if (frc::DriverStation::GetAlliance	() == frc::DriverStation::Alliance::kBlue)
+    allianceColor = AutomatedFunctions::AllianceColor::kBlue;
+  else
+  {
+    allianceColor = AutomatedFunctions::AllianceColor::kNone;
+    std::cout << "Please specify the Alliance\n\r";
+  }
+
+  // Initialize state for autonomous
   m_drive.ResetOdometry(m_drive.GetPose());
   currentState = AutoStates::kMoveBack;
 }
 
-void Robot::AutonomousPeriodic() {
-
-  // Drive Backward
+void Robot::AutonomousPeriodic()
+{
   switch (currentState)
   {
   case AutoStates::kMoveBack:
-    m_drive.Drive((units::velocity::meters_per_second_t) 0.8, (units::velocity::meters_per_second_t)0.0, (units::angular_velocity::radians_per_second_t)0.0, false);
-    if(m_drive.GetPose().X() >= (units::length::meter_t)0.7 )
+    // drive back about 1 meter in 1 second
+    m_drive.Drive((units::velocity::meters_per_second_t)1.0, (units::velocity::meters_per_second_t)0.0, (units::angular_velocity::radians_per_second_t)0.0, false);
+
+    // spin up shooter right away
+    m_robotFunction.SetShooter(targetShooterPower * FIRST_BALL_SHOOTER_POWER_REDUCTION);
+
+    if ((m_drive.GetPose().X() >= (units::length::meter_t)0.8 ) ||
+        (autoTimer.Get() > (units::time::second_t)1.5))
     {
       m_drive.Drive((units::velocity::meters_per_second_t)0.0, (units::velocity::meters_per_second_t)0.0, (units::angular_velocity::radians_per_second_t)0.0, false);
       currentState = AutoStates::kShootBall;
       shooterTimer.Reset();
       shooterTimer.Start();
+      printf("AUTO %.2f Shoot 1st Ball\n\r", debugTimer.Get());
     }
     break;
   
   case AutoStates::kShootBall:
-    // Automatic Shooting
-    // Set shooter angle
+    m_drive.Drive((units::velocity::meters_per_second_t)0.0, (units::velocity::meters_per_second_t)0.0, (units::angular_velocity::radians_per_second_t)0.0, true);
+    
+    // Automatic Shooting, set shooter angle and power
     m_robotFunction.SetShooterTiltPos(targetShooterAngle);
+    m_robotFunction.SetShooter(targetShooterPower * FIRST_BALL_SHOOTER_POWER_REDUCTION);
 
-    // upper hub shooter
-    shooterPower = targetShooterPower;
-    m_robotFunction.SetShooter(shooterPower);
-
-    // Align robot with target: center is reported as -0.080 radians
+    // Align robot with target
     // when the robot is to the right of the target the angle increases (+)
     // when the robot is to the left of the target the angle decreases (-)
-    if (targetAngleOffset > (-0.080 + TARGET_ANGLE_DEADBAND))
-    {
-      // Rotate robot Left
+    if (targetAngleOffset > (TARGET_ANGLE_OFFSET + TARGET_ANGLE_DEADBAND))
+    { // Rotate robot Left
       m_drive.Drive((units::velocity::meters_per_second_t)0.0, (units::velocity::meters_per_second_t)0.0, AutomatedFunctions::kTargetingRotation, false);
     }
-    else if (targetAngleOffset < (-0.080 - TARGET_ANGLE_DEADBAND))
-    {
-      // Rotate robot Right
+    else if (targetAngleOffset < (TARGET_ANGLE_OFFSET - TARGET_ANGLE_DEADBAND))
+    { // Rotate robot Right
       m_drive.Drive((units::velocity::meters_per_second_t)0.0, (units::velocity::meters_per_second_t)0.0, -AutomatedFunctions::kTargetingRotation, false);
     }
     else
-    {
-      // The robot is aligned with the target
+    { // The robot is aligned with the target
       m_drive.Drive((units::velocity::meters_per_second_t)0.0, (units::velocity::meters_per_second_t)0.0, (units::angular_velocity::radians_per_second_t)0.0, true);
     }
 
-    if(shooterTimer.Get() > (units::time::second_t)2.0)
+    // give it 1 more second to power up the shooter, then feed ball
+    if (shooterTimer.Get() > (units::time::second_t)1.0)
     {
       m_robotFunction.SetBallStorageBelt(0.75);
       m_robotFunction.SetShooterFeeder(1.0);
     }
-
-    if(shooterTimer.Get() > (units::time::second_t)4.0)
+    
+    // and after another 2 seconds stop the shooter
+    if (shooterTimer.Get() > (units::time::second_t)3.0)
     {
       m_robotFunction.SetShooter(0.0);
       m_robotFunction.SetBallStorageBelt(0.0);
       m_robotFunction.SetShooterFeeder(0.0);
-      m_Tricks.LocateAndLoadBall(m_drive, m_robotFunction, "none", AutomatedFunctions::FunctionCmd::kStartFunction);
-      currentState = AutoStates::kFindBall;
+      m_Tricks.LocateAndLoadBall(m_drive, m_robotFunction, AutomatedFunctions::kNone, AutomatedFunctions::FunctionCmd::kStartFunction);
+      autoTimer.Reset();
+      autoTimer.Start();
+      currentState = AutoStates::kRotateForSecondBall;
+//      currentState = AutoStates::kFindSecondBall;
+//      currentState = AutoStates::kAutonomousFinished;
+      printf("AUTO %.2f Start Rotate for 2nd Ball\n\r", debugTimer.Get());
     }   
     break;
 
-  case AutoStates::kFindBall:
+  case AutoStates::kRotateForSecondBall:
+    m_drive.Drive((units::velocity::meters_per_second_t)0.0, (units::velocity::meters_per_second_t)0.0, -AutomatedFunctions::kFindBallRotation, false);
+    if ((m_drive.GetPose().Rotation().Radians() <= (units::angle::radian_t)-0.8) ||
+        (autoTimer.Get() > (units::time::second_t)2.0))
+    {
+      m_drive.Drive((units::velocity::meters_per_second_t)0.0, (units::velocity::meters_per_second_t)0.0, (units::angular_velocity::radians_per_second_t)0.0, true);
+      m_Tricks.LoadBall(m_drive, m_robotFunction, true);
+      autoTimer.Reset();
+      autoTimer.Start();
+      currentState = AutoStates::kLoadSecondBall;
+      printf("AUTO %.2f Load 2nd Ball\n\r", debugTimer.Get());
+    }
+    break;
 
-    if (frc::DriverStation::GetAlliance	() == frc::DriverStation::Alliance::kRed){
-      if(m_Tricks.LocateAndLoadBall(m_drive, m_robotFunction, "red ball", AutomatedFunctions::FunctionCmd::kRunFunction))
-        currentState = AutoStates::kShootBall;
+  case AutoStates::kLoadSecondBall:
+    if (m_Tricks.LoadBall(m_drive, m_robotFunction, false) ||
+        (autoTimer.Get() > (units::time::second_t)3.5))
+    {
+      m_drive.Drive((units::velocity::meters_per_second_t)0.0, (units::velocity::meters_per_second_t)0.0, (units::angular_velocity::radians_per_second_t)0.0, true);
+      autoTimer.Reset();
+      autoTimer.Start();
+      currentState = AutoStates::kRotateBackFromSecondBall;
+      printf("AUTO %.2f Rotate Back from 2nd Ball\n\r", debugTimer.Get());
     }
-    else if (frc::DriverStation::GetAlliance	() == frc::DriverStation::Alliance::kBlue){
-      if(m_Tricks.LocateAndLoadBall(m_drive, m_robotFunction, "blue ball", AutomatedFunctions::FunctionCmd::kRunFunction))
-        currentState = AutoStates::kShootBall;
+    break;
+
+  case AutoStates::kRotateBackFromSecondBall:
+    m_drive.Drive((units::velocity::meters_per_second_t)0.0, (units::velocity::meters_per_second_t)0.0, AutomatedFunctions::kFindBallRotation, false);
+    if ((m_drive.GetPose().Rotation().Radians() >= (units::angle::radian_t)0.0) ||
+        (autoTimer.Get() > (units::time::second_t)2.0))
+    {
+      m_drive.Drive((units::velocity::meters_per_second_t)0.0, (units::velocity::meters_per_second_t)0.0, (units::angular_velocity::radians_per_second_t)0.0, true);
+      currentState = AutoStates::kShootSecondBall;
+      shooterTimer.Reset();
+      shooterTimer.Start();
+      printf("AUTO %.2f Shoot 2nd Ball\n\r", debugTimer.Get());
     }
+    break;
+
+  case AutoStates::kFindSecondBall:
+    // give it maximum 4 seconds to find another ball
+    if ((m_Tricks.LocateAndLoadBall(m_drive, m_robotFunction, allianceColor, AutomatedFunctions::FunctionCmd::kRunFunction)) ||
+        ((autoTimer.Get() > (units::time::second_t)4.0)))
+    {
+      m_drive.Drive((units::velocity::meters_per_second_t)0.0, (units::velocity::meters_per_second_t)0.0, (units::angular_velocity::radians_per_second_t)0.0, true);
+      currentState = AutoStates::kShootSecondBall;
+    }
+    break;
+
+  case AutoStates::kShootSecondBall:
+    // Automatic Shooting, set shooter angle and power
+    m_robotFunction.SetShooterTiltPos(targetShooterAngle);
+    m_robotFunction.SetShooter(targetShooterPower * FIRST_BALL_SHOOTER_POWER_REDUCTION);
+
+    // Align robot with target
+    // when the robot is to the right of the target the angle increases (+)
+    // when the robot is to the left of the target the angle decreases (-)
+    if (targetAngleOffset > (TARGET_ANGLE_OFFSET + TARGET_ANGLE_DEADBAND))
+      m_drive.Drive((units::velocity::meters_per_second_t)0.0, (units::velocity::meters_per_second_t)0.0, AutomatedFunctions::kTargetingRotation, false);
+    else if (targetAngleOffset < (TARGET_ANGLE_OFFSET - TARGET_ANGLE_DEADBAND))
+      m_drive.Drive((units::velocity::meters_per_second_t)0.0, (units::velocity::meters_per_second_t)0.0, -AutomatedFunctions::kTargetingRotation, false);
     else
-      std::cout << "Please specify the Alliance\n\r";
+      m_drive.Drive((units::velocity::meters_per_second_t)0.0, (units::velocity::meters_per_second_t)0.0, (units::angular_velocity::radians_per_second_t)0.0, true);
 
-    break;  
+    if (shooterTimer.Get() > (units::time::second_t)1.5)
+    { // give it 1.5 seconds to power up the shooter, then feed ball
+      m_robotFunction.SetBallStorageBelt(0.75);
+      m_robotFunction.SetShooterFeeder(1.0);
+    }
+    
+    if (shooterTimer.Get() > (units::time::second_t)3.5)
+    { // and after another 2 seconds stop the shooter
+#ifndef AUTONOMOUS_3_BALL
+      currentState = AutoStates::kAutonomousFinished;
+      printf("AUTO %.2f Finished\n\r", debugTimer.Get());
+#else
+      m_robotFunction.SetShooter(0.0);
+      m_robotFunction.SetBallStorageBelt(0.0);
+      m_robotFunction.SetShooterFeeder(0.0);
+      m_Tricks.LocateAndLoadBall(m_drive, m_robotFunction, AutomatedFunctions::kNone, AutomatedFunctions::FunctionCmd::kStartFunction);
+      autoTimer.Reset();
+      autoTimer.Start();
+      currentState = AutoStates::kFindThirdBall;
+      printf("AUTO %.2f Locate 3rd Ball\n\r", debugTimer.Get());
+#endif
+    }
+    break;
+
+  case AutoStates::kFindThirdBall:
+    // give it maximum 4 seconds to find another ball
+    if ((m_Tricks.LocateAndLoadBall(m_drive, m_robotFunction, allianceColor, AutomatedFunctions::FunctionCmd::kRunFunction)) ||
+        ((autoTimer.Get() > (units::time::second_t)4.0)))
+    {
+      m_drive.Drive((units::velocity::meters_per_second_t)0.0, (units::velocity::meters_per_second_t)0.0, (units::angular_velocity::radians_per_second_t)0.0, true);
+      currentState = AutoStates::kAutonomousFinished;
+    }
+    break;
+
+  case AutoStates::kAutonomousFinished:
+    // stop all movement
+    m_robotFunction.SetShooter(0.0);
+    m_robotFunction.SetBallStorageBelt(0.0);
+    m_robotFunction.SetShooterFeeder(0.0);
+    m_drive.Drive((units::velocity::meters_per_second_t)0.0, (units::velocity::meters_per_second_t)0.0, (units::angular_velocity::radians_per_second_t)0.0, true);
+    break;
   }
 }
 
@@ -203,6 +323,7 @@ void Robot::TeleopInit()
   m_robotFunction.SetShooterFeeder(0.0);
   m_robotFunction.SetShooter(0.0);
   m_robotFunction.SetCameraLightOn();
+  m_fieldRelative = true;
 }
 
 void Robot::TeleopPeriodic()
@@ -223,7 +344,7 @@ void Robot::TeleopPeriodic()
 
   // Initialize the sequence state of the automated function
   if (m_driveController.GetRawButtonPressed(3)){
-    m_Tricks.LocateAndLoadBall(m_drive, m_robotFunction, "none", AutomatedFunctions::FunctionCmd::kStartFunction);
+    m_Tricks.LocateAndLoadBall(m_drive, m_robotFunction, AutomatedFunctions::AllianceColor::kNone, AutomatedFunctions::FunctionCmd::kStartFunction);
     printf("Locating ball\n\r"); 
   }
 
@@ -231,30 +352,36 @@ void Robot::TeleopPeriodic()
   if (m_driveController.GetRawButton(3))
   {
     if (frc::DriverStation::GetAlliance	() == frc::DriverStation::Alliance::kRed){
-      m_Tricks.LocateAndLoadBall(m_drive, m_robotFunction, "red ball", AutomatedFunctions::FunctionCmd::kRunFunction);
+      allianceColor = AutomatedFunctions::AllianceColor::kRed;
       printf("Searching for Red Ball\n\r"); 
     }
     else if (frc::DriverStation::GetAlliance	() == frc::DriverStation::Alliance::kBlue){
-      m_Tricks.LocateAndLoadBall(m_drive, m_robotFunction, "blue ball", AutomatedFunctions::FunctionCmd::kRunFunction);
+      allianceColor = AutomatedFunctions::AllianceColor::kBlue;
       printf("Searching for blue Ball\n\r");     
-      }
+    }
     else
+    {
+//      DriveWithJoystick(m_fieldRelative);
+      DriveWithJoystick(true);
       std::cout << "Please specify the Alliance\n\r";
+    }
+
+    m_Tricks.LocateAndLoadBall(m_drive, m_robotFunction, allianceColor, AutomatedFunctions::FunctionCmd::kRunFunction);
   }
   else
   {
-    DriveWithJoystick(m_fieldRelative);
+//    DriveWithJoystick(m_fieldRelative);
+    DriveWithJoystick(true);
   }
 
   // Reset the sequence state of the automated function
   if (m_driveController.GetRawButtonReleased(3)){
-    m_Tricks.LocateAndLoadBall(m_drive, m_robotFunction, "none", AutomatedFunctions::FunctionCmd::kStopFunction);
+    m_Tricks.LocateAndLoadBall(m_drive, m_robotFunction, AutomatedFunctions::AllianceColor::kNone, AutomatedFunctions::FunctionCmd::kStopFunction);
     printf("End of automation\n\r"); 
   }
 
   // Update nte
   m_robotFunction.UpdateNTE();
-
 }
 
 void Robot::DisabledInit()
@@ -262,7 +389,7 @@ void Robot::DisabledInit()
   // brake to 0 speed and rotation
   m_drive.Drive((units::velocity::meters_per_second_t)0.0, (units::velocity::meters_per_second_t)0.0, (units::angular_velocity::radians_per_second_t)0.0, true);
 
-  m_robotFunction.SetCameraLightOff();
+  m_robotFunction.SetCameraLightOn();
 
   // Default intake up
   m_robotFunction.SetIntakeUp();
@@ -300,6 +427,11 @@ void Robot::DriveWithJoystick(bool fieldRelative)
   m_field.SetRobotPose(m_drive.GetPose());
 
   // Shooter controles
+  if( m_OpController.GetRawButtonPressed(4))
+  {
+    ball_shoot_count = 0;
+  }
+
   if (m_OpController.GetRawButton(4))
   {
     // Automatic Shooting
@@ -307,18 +439,20 @@ void Robot::DriveWithJoystick(bool fieldRelative)
     m_robotFunction.SetShooterTiltPos(targetShooterAngle);
 
     // upper hub shooter
-    shooterPower = targetShooterPower;
-    m_robotFunction.SetShooter(shooterPower);
+    if(ball_shoot_count == 0)
+      m_robotFunction.SetShooter(targetShooterPower * FIRST_BALL_SHOOTER_POWER_REDUCTION);
+    else
+      m_robotFunction.SetShooter(targetShooterPower);
 
-    // Align robot with target: center is reported as -0.080 radians
+    // Align robot with target
     // when the robot is to the right of the target the angle increases (+)
     // when the robot is to the left of the target the angle decreases (-)
-    if (targetAngleOffset > (-0.080 + TARGET_ANGLE_DEADBAND))
+    if (targetAngleOffset > (TARGET_ANGLE_OFFSET + TARGET_ANGLE_DEADBAND))
     {
       // Rotate robot Left
       m_drive.Drive((units::velocity::meters_per_second_t)0.0, (units::velocity::meters_per_second_t)0.0, AutomatedFunctions::kTargetingRotation, false);
     }
-    else if (targetAngleOffset < (-0.080 - TARGET_ANGLE_DEADBAND))
+    else if (targetAngleOffset < (TARGET_ANGLE_OFFSET - TARGET_ANGLE_DEADBAND))
     {
       // Rotate robot Right
       m_drive.Drive((units::velocity::meters_per_second_t)0.0, (units::velocity::meters_per_second_t)0.0, -AutomatedFunctions::kTargetingRotation, false);
@@ -327,6 +461,11 @@ void Robot::DriveWithJoystick(bool fieldRelative)
     {
       // The robot is aligned with the target
       m_drive.Drive((units::velocity::meters_per_second_t)0.0, (units::velocity::meters_per_second_t)0.0, (units::angular_velocity::radians_per_second_t)0.0, true);
+    }
+
+    if( m_OpController.GetRawButtonReleased(3))
+    {
+      ball_shoot_count++;
     }
 
     if(m_OpController.GetRawButton(3))
@@ -342,53 +481,79 @@ void Robot::DriveWithJoystick(bool fieldRelative)
   }
   else
   {
-    // everything we do if we aren't shooting
+    ball_shoot_count = 0;
+
+    // Reset power to zero if we aren't 
     m_robotFunction.SetShooter(0.0);
     m_robotFunction.SetShooterFeeder(0.0);
 
-    if ((double)intakeTimer.Get() > 0.5)
+    // Manual Shooter control
+    if(m_OpController.GetRawButton(1))
     {
-      m_robotFunction.SetIntakeMotorPower(0.0);
-      m_robotFunction.SetBallStorageBelt(0.0);
-    }
+      m_robotFunction.SetShooter(0.7);
 
-    // Automatic intake lift movement
-        // Automatic intake lift movement
-    if (m_OpController.GetRawButton(8))
-    {
-      m_robotFunction.SetIntakeDown();
-      m_robotFunction.SetIntakeMotorPower(-0.7);
-      m_robotFunction.SetBallStorageBelt(-0.75);
-      m_robotFunction.SetShooterFeeder(-1.0);
+      if(m_OpController.GetRawButton(2))
+      {
+        m_robotFunction.SetBallStorageBelt(0.75);
+        m_robotFunction.SetShooterFeeder(1.0);
+      }
+      else
+      {
+        m_robotFunction.SetBallStorageBelt(0.0);
+        m_robotFunction.SetShooterFeeder(0.0);
+      }
     }
-    if( m_OpController.GetRawButtonReleased(8))
+    else
     {
-      m_robotFunction.SetIntakeUp();
-      m_robotFunction.SetIntakeMotorPower(0.0);
+      // reseting again
+      m_robotFunction.SetShooter(0.0);
       m_robotFunction.SetBallStorageBelt(0.0);
       m_robotFunction.SetShooterFeeder(0.0);
-    }
 
-    if (m_OpController.GetRawButton(7))
-    {
-      m_robotFunction.SetIntakeDown();
-      m_robotFunction.SetIntakeMotorPower(0.7);
-      m_robotFunction.SetBallStorageBelt(0.75);
-    }
-    if( m_OpController.GetRawButtonReleased(7))
-    {
-      m_robotFunction.SetIntakeUp();
-      intakeTimer.Reset();
-      intakeTimer.Start();
-    }
+      // All the other manual control that we do if we aren't shooting
+      if ((double)intakeTimer.Get() > 0.5)
+      {
+        m_robotFunction.SetIntakeMotorPower(0.0);
+        m_robotFunction.SetBallStorageBelt(0.0);
+      }
 
+      // Automatic intake lift movement
+          // Automatic intake lift movement
+      if (m_OpController.GetRawButton(8))
+      {
+        m_robotFunction.SetIntakeDown();
+        m_robotFunction.SetIntakeMotorPower(-1.0);
+        m_robotFunction.SetBallStorageBelt(-0.75);
+        m_robotFunction.SetShooterFeeder(-1.0);
+      }
+      if( m_OpController.GetRawButtonReleased(8))
+      {
+        m_robotFunction.SetIntakeUp();
+        m_robotFunction.SetIntakeMotorPower(0.0);
+        m_robotFunction.SetBallStorageBelt(0.0);
+        m_robotFunction.SetShooterFeeder(0.0);
+      }
 
-    // Control to reset the Tilt encoder
-    if(m_OpController.GetRawButton(10))
-      m_robotFunction.ResetTiltEncoder();
-    else
-      m_robotFunction.SetShooterTiltMotor(frc::ApplyDeadband(m_OpController.GetRawAxis(1)*0.5, 0.08)); 
-  }
+      if (m_OpController.GetRawButton(7))
+      {
+        m_robotFunction.SetIntakeDown();
+        m_robotFunction.SetIntakeMotorPower(1.0);
+        m_robotFunction.SetBallStorageBelt(0.75);
+      }
+      if( m_OpController.GetRawButtonReleased(7))
+      {
+        m_robotFunction.SetIntakeUp();
+        intakeTimer.Reset();
+        intakeTimer.Start();
+      }
+
+      // Control to reset the Tilt encoder
+      if(m_OpController.GetRawButton(10))
+        m_robotFunction.ResetTiltEncoder();
+      else
+        m_robotFunction.SetShooterTiltMotor(frc::ApplyDeadband(m_OpController.GetRawAxis(1)*0.5, 0.08)); 
+    }
+ }
 
   // climb button
   if(m_driveController.GetRawButton(10))
